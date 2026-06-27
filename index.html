@@ -1,0 +1,2706 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OBJ売上">
+<meta name="theme-color" content="#0d0f14">
+<title>OBJ 売上分析</title>
+<style>
+:root{--bg:#0d0f14;--surface:#141720;--surface2:#1c2030;--border:#252a3a;--accent:#5b8dee;--accent2:#e8c96d;--accent3:#5ddbb4;--text:#e8eaf0;--muted:#7a82a0;--danger:#e85b7a;--orange:#ff9f4a;--purple:#b47dee;--radius:12px;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,'Helvetica Neue',sans-serif;min-height:100vh;padding-bottom:calc(72px + env(safe-area-inset-bottom));}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:200;padding-bottom:env(safe-area-inset-bottom);}
+.nav-btn{flex:1;padding:10px 2px 7px;background:none;border:none;color:var(--muted);font-size:9px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .2s;}
+.nav-btn.active{color:var(--accent);}
+.nav-icon{font-size:18px;line-height:1;}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px 10px;position:sticky;top:0;z-index:100;}
+.logo{font-size:22px;font-weight:900;letter-spacing:3px;color:var(--accent2);}
+.logo span{color:var(--accent);}
+.header-sub{color:var(--muted);font-size:10px;letter-spacing:1px;margin-top:2px;}
+.year-tabs{display:flex;gap:6px;margin-top:10px;overflow-x:auto;padding-bottom:2px;}
+.year-tabs::-webkit-scrollbar{display:none;}
+.ytab{flex-shrink:0;padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;}
+.ytab.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.page{display:none;padding:16px;}
+.page.active{display:block;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
+.card-title{font-size:10px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;position:relative;overflow:hidden;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.kpi-card:nth-child(1)::before{background:var(--accent);}
+.kpi-card:nth-child(2)::before{background:var(--accent2);}
+.kpi-card:nth-child(3)::before{background:var(--accent3);}
+.kpi-card:nth-child(4)::before{background:var(--danger);}
+.kpi-label{color:var(--muted);font-size:10px;letter-spacing:1px;margin-bottom:6px;}
+.kpi-value{font-size:26px;font-weight:900;letter-spacing:1px;}
+.kpi-delta{font-size:10px;margin-top:3px;}
+.kpi-delta.up{color:var(--accent3);}
+.kpi-delta.down{color:var(--danger);}
+.chart-wrap{width:100%;position:relative;}
+canvas{display:block;max-width:100%;}
+select{background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:400px;}
+th{color:var(--muted);font-weight:500;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);font-size:10px;white-space:nowrap;}
+td{padding:9px 10px;border-bottom:1px solid #1a1e28;white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+.badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700;}
+.b-blue{background:rgba(91,141,238,.15);color:var(--accent);}
+.b-gold{background:rgba(232,201,109,.15);color:var(--accent2);}
+.b-green{background:rgba(93,219,180,.15);color:var(--accent3);}
+.b-red{background:rgba(232,91,122,.15);color:var(--danger);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group label{font-size:11px;color:var(--muted);}
+.form-group input,.form-group select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:14px;width:100%;}
+.form-group input:focus{outline:none;border-color:var(--accent);}
+.form-section{margin-bottom:18px;}
+.form-section h3{font-size:12px;color:var(--accent2);letter-spacing:1px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.form-selectors{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.form-selectors select{width:100%;padding:10px 12px;border-radius:8px;font-size:14px;color:var(--text);background:var(--surface2);border:1px solid var(--border);}
+.btn{width:100%;padding:14px;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-danger{background:rgba(232,91,122,.15);color:var(--danger);border:1px solid var(--danger);margin-top:8px;}
+.month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.month-nav button{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px;}
+.month-nav .month-label{font-size:15px;font-weight:700;letter-spacing:1px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:14px;}
+.cal-head{text-align:center;font-size:10px;color:var(--muted);padding:4px 0;}
+.cal-day{aspect-ratio:1;border-radius:8px;border:1px solid #555;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;font-size:12px;background:#e8eaf0;color:#333;font-weight:500;}
+.cal-day.empty{background:transparent;border-color:transparent;cursor:default;}
+.cal-day.has-data{background:#1a3a6b;border-color:#5b8dee;color:#fff;font-weight:700;}
+.cal-day.today{border:2px solid var(--accent2);}
+.cal-day.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+.cal-day.has-event{border-bottom:5px solid #e74c3c;}
+.cal-legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+.cal-legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);}
+.cal-legend-box{width:12px;height:12px;border-radius:3px;}
+.daily-form{display:none;}
+.daily-form.active{display:block;}
+.selected-date-label{font-size:13px;font-weight:700;color:var(--accent2);margin-bottom:14px;padding:10px 14px;background:rgba(232,201,109,.08);border-radius:8px;border:1px solid rgba(232,201,109,.2);}
+.brand-rows{display:flex;flex-direction:column;gap:6px;}
+.brand-row{display:grid;grid-template-columns:1fr 72px;gap:8px;align-items:center;padding:5px 8px;border-radius:6px;}
+.brand-row:nth-child(odd){background:rgba(91,141,238,.22);border-left:3px solid #5b8dee;}
+.brand-row:nth-child(even){background:rgba(93,219,180,.18);border-left:3px solid #5ddbb4;}
+.brand-row label{font-size:12px;color:#fff;}
+.brand-row input{text-align:center;padding:8px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:14px;}
+.total-hint{font-size:10px;color:var(--muted);text-align:right;margin-top:6px;}
+.event-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;}
+.event-name{font-size:14px;font-weight:700;}
+.event-type-badge{flex-shrink:0;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:700;}
+.event-meta{font-size:11px;color:var(--muted);margin-bottom:6px;}
+.event-kpi{display:flex;gap:16px;}
+.event-kpi-item{font-size:11px;}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--accent3);color:#111;padding:10px 24px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;transition:all .3s;pointer-events:none;z-index:300;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:400;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--surface);border-radius:16px 16px 0 0;padding:20px 16px;width:100%;max-height:80vh;display:flex;flex-direction:column;gap:12px;overflow-y:auto;}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:#252a3a;transition:all .15s;display:inline-block;margin:0 8px;}
+.pin-dot.filled{background:#e8c96d;}
+.pin-dot.error{background:#e85b7a;}
+.pin-key{padding:18px;background:#1c2030;border:1px solid #252a3a;border-radius:12px;color:#e8eaf0;font-size:20px;font-weight:700;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<!-- ロック画面 -->
+<div id="lockScreen" style="display:none;position:fixed;inset:0;background:#0d0f14;z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:32px;">
+  <div style="font-size:28px;font-weight:900;letter-spacing:4px;color:#e8c96d;margin-bottom:6px;">OBJ</div>
+  <div style="font-size:11px;color:#7a82a0;letter-spacing:2px;margin-bottom:48px;">SALES ANALYTICS</div>
+  <div id="pinSection">
+    <div style="font-size:12px;color:#7a82a0;text-align:center;margin-bottom:20px;">PINコードを入力</div>
+    <div id="pinDots" style="display:flex;justify-content:center;margin-bottom:32px;">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:240px;">
+      <button class="pin-key" onclick="pinInput('1')">1</button>
+      <button class="pin-key" onclick="pinInput('2')">2</button>
+      <button class="pin-key" onclick="pinInput('3')">3</button>
+      <button class="pin-key" onclick="pinInput('4')">4</button>
+      <button class="pin-key" onclick="pinInput('5')">5</button>
+      <button class="pin-key" onclick="pinInput('6')">6</button>
+      <button class="pin-key" onclick="pinInput('7')">7</button>
+      <button class="pin-key" onclick="pinInput('8')">8</button>
+      <button class="pin-key" onclick="pinInput('9')">9</button>
+      <button class="pin-key" onclick="pinClear()" style="background:rgba(232,91,122,.15);color:#e85b7a;">✕</button>
+      <button class="pin-key" onclick="pinInput('0')">0</button>
+      <button class="pin-key" onclick="pinBackspace()">⌫</button>
+    </div>
+    <div id="pinError" style="color:#e85b7a;font-size:12px;text-align:center;margin-top:16px;min-height:18px;"></div>
+    <button onclick="switchToPassword()" style="background:none;border:none;color:#7a82a0;font-size:11px;margin-top:20px;cursor:pointer;display:block;width:100%;text-align:center;">パスワードで認証</button>
+  </div>
+  <div id="pwSection" style="display:none;width:280px;">
+    <div style="font-size:12px;color:#7a82a0;text-align:center;margin-bottom:20px;">パスワードを入力</div>
+    <div style="position:relative;margin-bottom:12px;">
+      <input type="password" id="pwInput" placeholder="パスワード" style="width:100%;background:#1c2030;border:1px solid #252a3a;border-radius:10px;padding:14px;color:#e8eaf0;font-size:16px;" onkeydown="if(event.key==='Enter')checkPassword()">
+    </div>
+    <button onclick="checkPassword()" style="width:100%;padding:14px;background:#5b8dee;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">ロック解除</button>
+    <div id="pwError" style="color:#e85b7a;font-size:12px;text-align:center;margin-top:12px;min-height:18px;"></div>
+    <button onclick="switchToPin()" style="background:none;border:none;color:#7a82a0;font-size:11px;margin-top:16px;cursor:pointer;display:block;width:100%;text-align:center;">PINで認証</button>
+  </div>
+  <div id="lockoutMsg" style="display:none;text-align:center;">
+    <div style="font-size:40px;margin-bottom:16px;">🔒</div>
+    <div style="color:#e85b7a;font-size:14px;margin-bottom:8px;">3回認証に失敗しました</div>
+    <div style="color:#7a82a0;font-size:12px;" id="lockoutTimer">30秒後に再試行できます</div>
+  </div>
+</div>
+
+<header>
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <div class="logo">OBJ <span>売上分析</span></div>
+      <div class="header-sub">SALES ANALYTICS DASHBOARD</div>
+    </div>
+  </div>
+  <div class="year-tabs" id="yearTabs"></div>
+</header>
+
+<!-- ① ダッシュボード -->
+<div class="page active" id="page-dash">
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">総売上</div><div class="kpi-value" id="kpiSales">—</div><div class="kpi-delta" id="kpiSalesD"></div></div>
+    <div class="kpi-card"><div class="kpi-label">来客数</div><div class="kpi-value" id="kpiVisitors">—</div><div class="kpi-delta" id="kpiVisitorsD"></div></div>
+    <div class="kpi-card"><div class="kpi-label">販売本数</div><div class="kpi-value" id="kpiQty">—</div><div class="kpi-delta" id="kpiQtyD"></div></div>
+    <div class="kpi-card"><div class="kpi-label">客単価</div><div class="kpi-value" id="kpiAvg">—</div><div class="kpi-delta" id="kpiAvgD"></div></div>
+  </div>
+  <div id="dashGoalCard" style="display:none;margin-bottom:14px;">
+    <div class="card" style="border-color:rgba(232,201,109,.3);">
+      <div class="card-title" style="color:var(--accent2);">🎯 今月の目標進捗</div>
+      <div id="dashGoalContent"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">月別売上推移</div>
+    <div class="chart-wrap" style="height:200px"><canvas id="chartMonthly" onclick="toggleMonthlyData()" style="cursor:pointer;"></canvas></div>
+    <div id="monthlyDataPanel" style="display:none;margin-top:12px;">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px;">▼ タップで閉じる</div>
+      <div id="monthlyDataTable"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">
+      <span id="brandLabel">ブランド別販売本数</span>
+      <select id="brandMonthSel" onchange="updateBrandView()">
+        <option value="all">全月合計</option>
+        <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+        <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+        <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+        <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+      </select>
+    </div>
+    <div class="chart-wrap" style="height:420px"><canvas id="chartBrand" style="cursor:pointer;"></canvas></div>
+    <button onclick="toggleBrandData()" style="width:100%;padding:10px;margin-top:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;">📊 全ブランド詳細を表示／非表示</button>
+    <div id="brandDataPanel" style="display:none;margin-top:12px;">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px;">▼ タップで閉じる</div>
+      <div id="brandDataTable"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">カテゴリ別売上内訳</div>
+    <div class="chart-wrap" style="height:180px"><canvas id="chartCategory"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">
+      <span id="weekdayLabel">曜日別分析</span>
+      <select id="weekdayMetric" onchange="updateWeekdayChart()">
+        <option value="sales">売上</option>
+        <option value="visitors">来客数</option>
+      </select>
+    </div>
+    <div class="chart-wrap" style="height:180px"><canvas id="chartWeekday"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">新規・リピート比率トレンド</div>
+    <div class="chart-wrap" style="height:200px"><canvas id="chartRepeat" onclick="toggleRepeatData()" style="cursor:pointer;"></canvas></div>
+    <div id="repeatDataPanel" style="display:none;margin-top:12px;">
+      <div id="repeatDataTable"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">
+      <span>イベント実績</span>
+      <button onclick="showPage('event')" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">一覧 ›</button>
+    </div>
+    <div id="dashEventList"><div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">イベントなし</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">月別詳細</div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>年月</th><th>売上</th><th>来客</th><th>本数</th><th>客単価</th><th>前月比</th>
+      </tr></thead><tbody id="tableBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ② 日報入力 -->
+<div class="page" id="page-daily">
+  <div class="card">
+    <div class="month-nav">
+      <button onclick="prevMonth()">&#8249;</button>
+      <div class="month-label" id="calMonthLabel"></div>
+      <button onclick="nextMonth()">&#8250;</button>
+    </div>
+    <div class="cal-legend">
+      <div class="cal-legend-item"><div class="cal-legend-box" style="background:#1a3a6b;border:1px solid #5b8dee;"></div>売上入力済</div>
+      <div class="cal-legend-item"><div class="cal-legend-box" style="border-bottom:5px solid #e74c3c;border:1px solid var(--border);"></div>イベント</div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+  <div class="card daily-form" id="dailyFormCard">
+    <div class="selected-date-label" id="selectedDateLabel">日付を選択してください</div>
+    <div id="dailyEventInfo" style="display:none;background:rgba(232,201,109,.08);border:1px solid rgba(232,201,109,.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;"></div>
+    <!-- シフト連携：出勤スタッフ表示 -->
+    <div id="shiftStaffInfo" style="display:none;background:rgba(91,141,238,.08);border:1px solid rgba(91,141,238,.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;"></div>
+    <div style="margin-bottom:14px;display:flex;flex-direction:column;gap:8px;">
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:rgba(93,219,180,.1);border:1px solid var(--accent3);border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;color:var(--accent3);">
+        📷 この日の写真・PDFから自動入力
+        <input type="file" id="ocrFileInput" accept="image/*,application/pdf" style="display:none;" onchange="readDailyPhoto(event)">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:rgba(232,201,109,.1);border:1px solid var(--accent2);border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;color:var(--accent2);">
+        📚 複数の日報を一括読み取り
+        <input type="file" id="bulkOcrInput" accept="image/*,application/pdf" multiple style="display:none;" onchange="readBulkPhotos(event)">
+      </label>
+      <div id="ocrStatus" style="font-size:11px;color:var(--muted);text-align:center;min-height:16px;"></div>
+    </div>
+    <div class="form-section">
+      <h3>📊 売上・客数</h3>
+      <div class="form-row">
+        <div class="form-group"><label>総売上高（円）</label><input type="number" id="dSales" placeholder="例: 320000" min="0"></div>
+        <div class="form-group"><label>総客数（人）</label><input type="number" id="dVisitors" placeholder="例: 12" min="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>新規顧客数</label><input type="number" id="dNewCust" placeholder="例: 3" min="0"></div>
+        <div class="form-group"><label>リピート客数</label><input type="number" id="dRepeat" placeholder="例: 9" min="0"></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <h3>🕶️ カテゴリ別売上（円）</h3>
+      <div class="form-row">
+        <div class="form-group"><label>一式売上</label><input type="number" id="dIssiki" placeholder="0" min="0"></div>
+        <div class="form-group"><label>サングラス</label><input type="number" id="dSunglass" placeholder="0" min="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>レンズ入替</label><input type="number" id="dLens" placeholder="0" min="0"></div>
+        <div class="form-group"><label>修理・残金等</label><input type="number" id="dRepair" placeholder="0" min="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>フレーム交換</label><input type="number" id="dFrame" placeholder="0" min="0"></div>
+        <div class="form-group"><label>一式販売本数</label><input type="number" id="dQty" placeholder="0" min="0"></div>
+      </div>
+    </div>
+    <div class="form-section" style="margin-top:18px;">
+      <h3>🏷️ ブランド別販売本数</h3>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.6;">入力すると週次集計に自動反映されます。</p>
+      <div class="brand-rows" id="dailyBrandRows"></div>
+      <div class="total-hint">合計: <span id="dailyBrandTotal">0</span> 本</div>
+    </div>
+    <button class="btn btn-primary" onclick="saveDailyBasic()">💾 売上データを保存</button>
+    <button class="btn btn-danger" onclick="deleteDailyBasic()">🗑️ この日のデータを削除</button>
+  </div>
+
+</div>
+
+<!-- ③ 月次入力 -->
+<div class="page" id="page-monthly">
+  <div class="card">
+    <div class="card-title">🎯 月次目標設定</div>
+    <div class="form-selectors">
+      <select id="goalYear"></select>
+      <select id="goalMonth">
+        <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+        <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+        <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+        <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>目標売上（円）</label><input type="number" id="goalSales" placeholder="例: 20000000" min="0"></div>
+      <div class="form-group"><label>目標販売本数</label><input type="number" id="goalQty" placeholder="例: 130" min="0"></div>
+    </div>
+    <div id="goalProgress" style="display:none;background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:12px;">
+      <div id="goalProgressContent"></div>
+    </div>
+    <button class="btn btn-primary" onclick="saveGoal()">🎯 目標を保存</button>
+  </div>
+  <div class="card">
+    <div class="card-title">月次データ入力</div>
+    <div class="form-selectors">
+      <select id="inYear"></select>
+      <select id="inMonth">
+        <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+        <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+        <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+        <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+      </select>
+    </div>
+    <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:10px;font-size:12px;" id="autoSummary">月を選択すると集計値が表示されます</div>
+    <div class="form-row">
+      <div class="form-group"><label>売上補正（円）</label><input type="number" id="inSales" placeholder="自動集計を上書き" min="0"></div>
+      <div class="form-group"><label>通販売上高（円）</label><input type="number" id="inOnline" placeholder="例: 79600" min="0" oninput="updateTotalSales()"></div>
+    </div>
+    <div style="background:rgba(232,201,109,.08);border:1px solid rgba(232,201,109,.2);border-radius:8px;padding:12px;margin-top:4px;margin-bottom:12px;">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;">総売上高（店舗＋通販）</div>
+      <div style="font-size:28px;font-weight:900;color:var(--accent2);" id="totalSalesDisplay">—</div>
+    </div>
+    <button class="btn btn-primary" onclick="saveMonthly()">💾 保存する</button>
+    <button class="btn" onclick="generateMonthlyReport()" style="background:rgba(232,201,109,.15);color:var(--accent2);border:1px solid var(--accent2);margin-top:8px;">📋 月次レポートを生成</button>
+    <button class="btn btn-danger" onclick="deleteMonthly()">🗑️ この月の手動データを削除</button>
+  </div>
+  <div class="card">
+    <div class="card-title">ブランド別本数（月次確定値）</div>
+    <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;" id="autoBrandSummary">月を選択すると集計値が表示されます</div>
+    <div class="brand-rows" id="brandInputRows"></div>
+    <div class="total-hint">合計: <span id="brandTotal">0</span> 本</div>
+    <button class="btn btn-primary" style="margin-top:12px;" onclick="saveMonthlyBrands()">💾 ブランドデータを保存</button>
+  </div>
+</div>
+
+<!-- ④ イベント -->
+<div class="page" id="page-event">
+  <div class="card">
+    <div class="card-title">
+      <span>イベント一覧</span>
+      <button onclick="showEventForm(null)" style="background:var(--accent);border:none;color:#fff;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">＋ 新規登録</button>
+    </div>
+    <div id="eventList"><div style="color:var(--muted);font-size:12px;text-align:center;padding:20px;">イベントが登録されていません</div></div>
+  </div>
+  <div class="card" id="eventFormCard" style="display:none;">
+    <div class="card-title" id="eventFormTitle">イベント登録</div>
+    <input type="hidden" id="evId">
+    <div class="form-section">
+      <h3>📋 イベント情報</h3>
+      <div class="form-group" style="margin-bottom:10px;">
+        <label>イベント名</label>
+        <input type="text" id="evName" placeholder="例: MYKITA トランクショウ">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>種別</label>
+          <select id="evType" style="width:100%;padding:10px 12px;border-radius:8px;font-size:14px;color:var(--text);background:var(--surface2);border:1px solid var(--border);">
+            <option value="trunk">トランクショウ</option>
+            <option value="popup">POPUP</option>
+            <option value="fair">フェア</option>
+            <option value="sale">セール</option>
+            <option value="other">その他</option>
+          </select>
+        </div>
+        <div class="form-group"><label>関連ブランド</label><input type="text" id="evBrand" placeholder="例: MYKITA"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>開始日</label><input type="date" id="evStart"></div>
+        <div class="form-group"><label>終了日</label><input type="date" id="evEnd"></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <h3>💰 売上データ</h3>
+      <div class="form-row">
+        <div class="form-group"><label>売上（円）</label><input type="number" id="evSales" placeholder="例: 1500000" min="0"></div>
+        <div class="form-group"><label>販売本数</label><input type="number" id="evQty" placeholder="例: 12" min="0"></div>
+      </div>
+      <div class="form-group"><label>メモ</label><input type="text" id="evNote" placeholder="任意メモ"></div>
+    </div>
+    <button class="btn btn-primary" onclick="saveEvent()">💾 保存する</button>
+    <button class="btn btn-danger" id="evDeleteBtn" onclick="deleteEvent()" style="display:none;">🗑️ 削除</button>
+    <button class="btn" style="background:var(--surface2);color:var(--muted);margin-top:8px;" onclick="hideEventForm()">キャンセル</button>
+  </div>
+  <div class="card">
+    <div class="card-title">イベント別売上</div>
+    <div class="chart-wrap" style="height:220px"><canvas id="chartEvent"></canvas></div>
+  </div>
+</div>
+
+<!-- ⑤ 設定 -->
+<div class="page" id="page-settings">
+  <div class="card">
+    <div class="card-title">
+      <span>🏷️ ブランド管理</span>
+      <button onclick="showBrandForm(null)" style="background:var(--accent);border:none;color:#fff;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">＋ 追加</button>
+    </div>
+    <div id="brandMasterList"></div>
+    <div id="brandFormCard" style="display:none;margin-top:14px;background:var(--surface2);border-radius:10px;padding:14px;">
+      <div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:12px;" id="brandFormTitle">ブランド追加</div>
+      <input type="hidden" id="bfIdx">
+      <div class="form-row">
+        <div class="form-group"><label>ブランド名</label><input type="text" id="bfName" placeholder="例: MYKITA"></div>
+        <div class="form-group">
+          <label>カテゴリ</label>
+          <select id="bfCat" style="width:100%;padding:10px 12px;border-radius:8px;font-size:14px;color:var(--text);background:var(--surface);border:1px solid var(--border);">
+            <option value="Optical">Optical</option>
+            <option value="SG">SG</option>
+            <option value="Optical/SG">Optical/SG</option>
+            <option value="スマートグラス">スマートグラス</option>
+            <option value="オリジナル">オリジナル</option>
+            <option value="その他">その他</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>グループ</label><input type="text" id="bfGroup" placeholder="例: EYEVAN系（省略可）"></div>
+        <div class="form-group"><label>国</label><input type="text" id="bfCountry" placeholder="例: ドイツ"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>備考</label><input type="text" id="bfNote" placeholder="例: トランクショウあり"></div>
+      </div>
+      <button class="btn btn-primary" onclick="saveBrandMaster()" style="margin-bottom:8px;">💾 保存</button>
+      <button id="bfDeleteBtn" class="btn btn-danger" onclick="deleteBrandMaster()" style="display:none;">🗑️ 削除</button>
+      <button class="btn" onclick="hideBrandForm()" style="background:var(--surface2);color:var(--muted);margin-top:4px;">キャンセル</button>
+    </div>
+  </div>
+
+  
+
+  <div class="card">
+    <div class="card-title">🤖 AI読み取り設定</div>
+    <div id="apiKeyStatus" style="font-size:12px;padding:10px;background:var(--surface2);border-radius:8px;margin-bottom:12px;color:var(--muted);">未設定 — APIキーを入力してください</div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>Anthropic APIキー</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." style="font-size:11px;">
+    </div>
+    <button class="btn btn-primary" onclick="saveApiKey()" style="margin-bottom:8px;">🔑 APIキーを設定する</button>
+    <button class="btn" onclick="clearApiKey()" style="background:var(--surface2);color:var(--muted);font-size:12px;">削除</button>
+    <p style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.6;">APIキーはこの端末のlocalStorageにのみ保存されます。</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">☁️ Google Drive 同期</div>
+    <div id="gdriveStatus" style="font-size:12px;padding:10px;background:var(--surface2);border-radius:8px;margin-bottom:12px;color:var(--muted);">未設定 — URLを入力してください</div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>Google Apps Script URL</label>
+      <input type="text" id="gasUrl" placeholder="https://script.google.com/macros/s/..." style="font-size:11px;">
+    </div>
+    <button class="btn btn-primary" onclick="gasSaveUrl()" style="margin-bottom:8px;">🔗 URLを設定する</button>
+    <div id="gdriveActions" style="display:none;">
+      <button class="btn" onclick="gdriveSave()" style="background:rgba(232,201,109,.15);color:var(--accent2);border:1px solid var(--accent2);margin-bottom:8px;">☁️ Driveに保存</button>
+      <button class="btn" onclick="gdriveLoad()" style="background:rgba(93,219,180,.15);color:var(--accent3);border:1px solid var(--accent3);margin-bottom:8px;">📥 Driveから読み込む</button>
+      <button class="btn" onclick="gdriveClear()" style="background:var(--surface2);color:var(--muted);font-size:12px;">URLをリセット</button>
+    </div>
+    <div style="margin-top:14px;padding:12px;background:rgba(232,201,109,.08);border:1px solid rgba(232,201,109,.2);border-radius:8px;">
+      <div style="font-size:11px;color:var(--accent2);font-weight:700;margin-bottom:8px;">📋 GASコード</div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;font-size:10px;font-family:monospace;color:#5ddbb4;line-height:1.8;">
+        var N='OBJ_data.json';<br>
+        function doGet(e){<br>
+        &nbsp;&nbsp;var f=DriveApp.getFilesByName(N);<br>
+        &nbsp;&nbsp;var data=f.hasNext()?f.next().getBlob().getDataAsString():JSON.stringify({status:'empty'});<br>
+        &nbsp;&nbsp;return ContentService.createTextOutput(data).setMimeType(ContentService.MimeType.JSON);<br>
+        }<br>
+        function doPost(e){<br>
+        &nbsp;&nbsp;var f=DriveApp.getFilesByName(N);<br>
+        &nbsp;&nbsp;if(f.hasNext())f.next().setContent(e.postData.contents);<br>
+        &nbsp;&nbsp;else DriveApp.createFile(N,e.postData.contents,MimeType.PLAIN_TEXT);<br>
+        &nbsp;&nbsp;return ContentService.createTextOutput(JSON.stringify({status:'ok'})).setMimeType(ContentService.MimeType.JSON);<br>
+        }
+      </div>
+      <button onclick="copyGasCode()" style="margin-top:8px;width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:8px;font-size:11px;cursor:pointer;">📋 コードをコピー</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📱 データを別端末に持ち運ぶ</div>
+    <button class="btn" style="background:var(--accent2);color:#111;font-weight:700;" onclick="exportEmbeddedHTML()">📦 データ入りHTMLを生成</button>
+  </div>
+  <div class="card">
+    <div class="card-title">データエクスポート</div>
+    <button class="btn" style="background:var(--surface2);color:var(--accent2);border:1px solid var(--accent2);" onclick="exportCSV()">📊 CSV でエクスポート</button>
+    <button class="btn" style="background:var(--surface2);color:var(--accent3);border:1px solid var(--accent3);margin-top:8px;" onclick="exportJSON()">🗂️ JSON でエクスポート</button>
+    <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
+    <label class="btn" style="background:var(--surface2);color:var(--accent3);border:1px solid var(--accent3);display:block;text-align:center;cursor:pointer;">📥 JSON をインポート<input type="file" id="importFile" accept=".json" style="display:none;" onchange="importJSON(event)"></label>
+  </div>
+  <div class="card">
+    <div class="card-title">🔐 セキュリティ設定</div>
+    <button class="btn btn-primary" onclick="openChangePIN()" style="margin-bottom:8px;">🔢 PINコードを変更</button>
+    <button class="btn" onclick="changeAutoLockTime()" style="background:var(--surface2);color:var(--accent3);border:1px solid var(--accent3);margin-bottom:8px;">⏱️ 自動ロック時間を変更</button>
+    <button class="btn btn-danger" onclick="manualLock()">🔒 今すぐロック</button>
+  </div>
+  <div class="card">
+    <div class="card-title">データ管理</div>
+    <button class="btn btn-primary" onclick="rebuildMonthly()">🔄 月次データを再集計</button>
+  </div>
+</div>
+
+<!-- 一括読み取りモーダル -->
+<div class="modal-overlay" id="bulkOcrModal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:13px;font-weight:700;color:var(--accent2);">📚 一括読み取り結果</div>
+      <button onclick="closeBulkOcrModal()" style="background:var(--surface2);border:none;color:var(--muted);border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;">✕</button>
+    </div>
+    <div id="bulkOcrProgress" style="font-size:12px;color:var(--accent3);"></div>
+    <div id="bulkOcrResults"></div>
+    <button id="bulkSaveBtn" class="btn btn-primary" onclick="saveBulkOcrData()" style="display:none;margin-top:8px;">💾 全て保存する</button>
+    <button class="btn" onclick="closeBulkOcrModal()" style="background:var(--surface2);color:var(--muted);">閉じる</button>
+  </div>
+</div>
+
+<!-- 月次レポートモーダル -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:14px;font-weight:700;color:var(--accent2);" id="reportTitle">月次レポート</div>
+      <button onclick="closeReportModal()" style="background:var(--surface2);border:none;color:var(--muted);border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;">✕</button>
+    </div>
+    <div id="reportContent" style="font-size:13px;line-height:1.9;"></div>
+    <button class="btn btn-primary" onclick="copyReport()" style="margin-top:12px;">📋 テキストをコピー</button>
+    <button class="btn" onclick="closeReportModal()" style="background:var(--surface2);color:var(--muted);margin-top:8px;">閉じる</button>
+  </div>
+</div>
+
+<!-- エクスポートモーダル -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:13px;font-weight:700;" id="exportLabel">エクスポート</div>
+      <button onclick="closeExportModal()" style="background:var(--surface2);border:none;color:var(--muted);border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;">✕</button>
+    </div>
+    <p style="font-size:12px;color:var(--muted);line-height:1.6;">下のテキストを全選択してコピーし、メモアプリに貼り付けて保存してください。</p>
+    <textarea id="exportTextarea" readonly style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:11px;padding:10px;min-height:160px;resize:none;font-family:monospace;width:100%;" onclick="this.select()"></textarea>
+    <button class="btn btn-primary" onclick="copyExportData()">📋 全てコピーする</button>
+    <button class="btn" onclick="closeExportModal()" style="background:var(--surface2);color:var(--muted);">閉じる</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-dash" onclick="showPage('dash')"><span class="nav-icon">📊</span>分析</button>
+  <button class="nav-btn" id="nav-daily" onclick="showPage('daily')"><span class="nav-icon">📅</span>日報</button>
+  <button class="nav-btn" id="nav-monthly" onclick="showPage('monthly')"><span class="nav-icon">📆</span>月次</button>
+  <button class="nav-btn" id="nav-event" onclick="showPage('event')"><span class="nav-icon">🎪</span>イベント</button>
+  <button class="nav-btn" id="nav-settings" onclick="showPage('settings')"><span class="nav-icon">⚙️</span>設定</button>
+</nav>
+<script>
+
+// ══ 定数 ══
+var STORAGE_KEY='obj_sales_v2';
+var SEC_KEY='obj_security_v2';
+var PIN_HASH_DEFAULT='7c540b45001b1c40';
+var AUTO_LOCK_MIN=5;
+var START_YEAR=2025;
+var NOW=new Date();
+var CURRENT_YEAR=NOW.getFullYear();
+var CURRENT_MONTH=NOW.getMonth()+1;
+var currentYear='all';
+var selectedDate=null;
+var calYear=CURRENT_YEAR;
+var calMonth=CURRENT_MONTH;
+var pinBuffer='';
+var failCount=0;
+var autoLockTimer=null;
+var isLocked=false;
+var lockInterval=null;
+var bulkOcrDataList=[];
+
+var BRANDS=["OBJ", "JMM", "Even", "OP", "TOMFORD(Optical)", "TOMFORD(SG)", "RIGARDS", "JDO", "AKONI(Optical)", "AKONI(SG)", "DITA(Optical)", "DITA(SG)", "ic!berlin", "LINDBERG", "MYKITA", "MATSUDA(Optical)", "MATSUDA(SG)", "KameManNen", "EYEVAN系(Optical)", "EYEVAN系(SG)", "ayame", "BJ", "スポーツ系", "その他海外(Optical)", "その他海外(SG)", "その他国内(Optical)", "その他国内(SG)"];
+
+var EV_TYPE_LABEL={trunk:'トランクショウ',popup:'POPUP',fair:'フェア',sale:'セール',other:'その他'};
+var EV_TYPE_COLOR={trunk:'#e8c96d',popup:'#5b8dee',fair:'#5ddbb4',sale:'#e85b7a',other:'#7a82a0'};
+
+var HOLIDAYS={
+  '2025-1-1':'元日','2025-1-13':'成人の日','2025-2-11':'建国記念日','2025-2-23':'天皇誕生日','2025-3-20':'春分の日',
+  '2025-4-29':'昭和の日','2025-5-3':'憲法記念日','2025-5-4':'みどりの日','2025-5-5':'こどもの日',
+  '2025-7-21':'海の日','2025-8-11':'山の日','2025-9-15':'敬老の日','2025-9-23':'秋分の日',
+  '2025-10-13':'スポーツの日','2025-11-3':'文化の日','2025-11-23':'勤労感謝の日',
+  '2026-1-1':'元日','2026-1-12':'成人の日','2026-2-11':'建国記念日','2026-2-23':'天皇誕生日','2026-3-20':'春分の日',
+  '2026-4-29':'昭和の日','2026-5-3':'憲法記念日','2026-5-4':'みどりの日','2026-5-5':'こどもの日',
+  '2026-7-20':'海の日','2026-8-11':'山の日','2026-9-21':'敬老の日','2026-9-23':'秋分の日',
+  '2026-10-12':'スポーツの日','2026-11-3':'文化の日','2026-11-23':'勤労感謝の日',
+  '2027-1-1':'元日','2027-1-11':'成人の日','2027-2-11':'建国記念日','2027-2-23':'天皇誕生日','2027-3-21':'春分の日',
+  '2027-4-29':'昭和の日','2027-5-3':'憲法記念日','2027-5-4':'みどりの日','2027-5-5':'こどもの日',
+  '2027-7-19':'海の日','2027-8-11':'山の日','2027-9-20':'敬老の日','2027-9-23':'秋分の日',
+  '2027-10-11':'スポーツの日','2027-11-3':'文化の日','2027-11-23':'勤労感謝の日'
+};
+
+// ══ ユーティリティ ══
+function dKey(y,m,d){return y+'-'+m+'-'+d;}
+function mKey(y,m){return y+'-'+m;}
+function wKey(y,w){return y+'-W'+w;}
+function fmt(n){if(!n||isNaN(n))return'—';if(n>=100000000)return(n/100000000).toFixed(1)+'億';if(n>=10000)return Math.round(n/10000)+'万';return n.toLocaleString();}
+function fmtFull(n){if(!n||isNaN(n))return'—';return'¥'+Math.round(n).toLocaleString();}
+function sum(a){var s=0;for(var i=0;i<a.length;i++)s+=(a[i]||0);return s;}
+function today(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function getHoliday(y,m,d){
+  if(m===12&&d===31)return '年末休業';
+  if(m===1&&d>=1&&d<=4)return d===1?'元日':'年始休業';
+  return HOLIDAYS[y+'-'+m+'-'+d]||null;
+}
+
+function showToast(msg,err){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=err?'#e85b7a':'#5ddbb4';
+  t.style.color=err?'#fff':'#111';
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2200);
+}
+
+// ══ DB ══
+var INITIAL_DB={"daily":{"2026-1-5":{"sales":884710,"visitors":14,"newCust":2,"repeat":12,"issiki":662310.0,"sunglass":118800.0,"lens":94800.0,"repair":8800.0,"frame":0.0,"qty":8},"2026-1-6":{"sales":216760,"visitors":5,"newCust":1,"repeat":4,"issiki":0.0,"sunglass":106810.0,"lens":48400.0,"repair":24550.0,"frame":37000.0,"qty":0},"2026-1-7":{"sales":430100,"visitors":6,"newCust":0,"repeat":6,"issiki":368500.0,"sunglass":0.0,"lens":33000.0,"repair":28600.0,"frame":0.0,"qty":4},"2026-1-8":{"sales":716530,"visitors":7,"newCust":4,"repeat":3,"issiki":581680.0,"sunglass":0.0,"lens":0.0,"repair":1450.0,"frame":133400.0,"qty":5},"2026-1-9":{"sales":570900,"visitors":6,"newCust":0,"repeat":6,"issiki":521400.0,"sunglass":27500.0,"lens":22000.0,"repair":0.0,"frame":0.0,"qty":5},"2026-1-10":{"sales":1231340,"visitors":17,"newCust":2,"repeat":15,"issiki":1001800.0,"sunglass":0.0,"lens":85450.0,"repair":144090.0,"frame":0.0,"qty":13},"2026-1-11":{"sales":1643370,"visitors":17,"newCust":3,"repeat":14,"issiki":1236770.0,"sunglass":0.0,"lens":382400.0,"repair":24200.0,"frame":0.0,"qty":12},"2026-1-12":{"sales":1281160,"visitors":16,"newCust":4,"repeat":12,"issiki":1092300.0,"sunglass":37400.0,"lens":215600.0,"repair":35860.0,"frame":0.0,"qty":11},"2026-1-13":{"sales":256080,"visitors":6,"newCust":0,"repeat":6,"issiki":148280.0,"sunglass":0.0,"lens":99000.0,"repair":8800.0,"frame":0.0,"qty":3},"2026-1-14":{"sales":402000,"visitors":8,"newCust":2,"repeat":6,"issiki":288200.0,"sunglass":0.0,"lens":110500.0,"repair":3300.0,"frame":0.0,"qty":4},"2026-1-15":{"sales":320870,"visitors":7,"newCust":1,"repeat":6,"issiki":238370.0,"sunglass":0.0,"lens":82500.0,"repair":0.0,"frame":0.0,"qty":3},"2026-1-16":{"sales":282700,"visitors":3,"newCust":2,"repeat":1,"issiki":229900.0,"sunglass":52800.0,"lens":0.0,"repair":0.0,"frame":0.0,"qty":2},"2026-1-17":{"sales":814880,"visitors":8,"newCust":1,"repeat":7,"issiki":393580.0,"sunglass":379500.0,"lens":41800.0,"repair":0.0,"frame":0.0,"qty":6},"2026-1-18":{"sales":719870,"visitors":9,"newCust":2,"repeat":7,"issiki":484370.0,"sunglass":0.0,"lens":78100.0,"repair":68100.0,"frame":89300.0,"qty":5},"2026-1-19":{"sales":174900,"visitors":1,"newCust":1,"repeat":0,"issiki":174900.0,"sunglass":0.0,"lens":0.0,"repair":0.0,"frame":0.0,"qty":1},"2026-1-20":{"sales":125400,"visitors":1,"newCust":0,"repeat":1,"issiki":101200.0,"sunglass":0.0,"lens":24200.0,"repair":0.0,"frame":0.0,"qty":1},"2026-1-21":{"sales":226800,"visitors":4,"newCust":0,"repeat":4,"issiki":0.0,"sunglass":0.0,"lens":224500.0,"repair":2300.0,"frame":0.0,"qty":0},"2026-1-22":{"sales":496750,"visitors":6,"newCust":2,"repeat":4,"issiki":411500.0,"sunglass":50600.0,"lens":0.0,"repair":34650.0,"frame":0.0,"qty":3},"2026-1-23":{"sales":631400,"visitors":5,"newCust":4,"repeat":1,"issiki":543400.0,"sunglass":0.0,"lens":55000.0,"repair":33000.0,"frame":0.0,"qty":6},"2026-1-24":{"sales":513590,"visitors":6,"newCust":3,"repeat":3,"issiki":482130.0,"sunglass":0.0,"lens":30800.0,"repair":660.0,"frame":0.0,"qty":5},"2026-1-25":{"sales":685080,"visitors":10,"newCust":0,"repeat":10,"issiki":514580.0,"sunglass":0.0,"lens":127600.0,"repair":42900.0,"frame":0.0,"qty":6},"2026-1-26":{"sales":242200,"visitors":5,"newCust":0,"repeat":5,"issiki":212300.0,"sunglass":0.0,"lens":74800.0,"repair":17600.0,"frame":0.0,"qty":3},"2026-1-27":{"sales":338610,"visitors":4,"newCust":1,"repeat":3,"issiki":421300.0,"sunglass":0.0,"lens":29700.0,"repair":7610.0,"frame":0.0,"qty":3},"2026-1-28":{"sales":111100,"visitors":3,"newCust":1,"repeat":2,"issiki":75900.0,"sunglass":0.0,"lens":23100.0,"repair":12100.0,"frame":0.0,"qty":1},"2026-1-29":{"sales":169180,"visitors":2,"newCust":2,"repeat":0,"issiki":169180.0,"sunglass":0.0,"lens":0.0,"repair":0.0,"frame":0.0,"qty":2},"2026-1-30":{"sales":359700,"visitors":6,"newCust":1,"repeat":5,"issiki":206580.0,"sunglass":0.0,"lens":102300.0,"repair":50820.0,"frame":0.0,"qty":2},"2026-1-31":{"sales":577065,"visitors":10,"newCust":3,"repeat":7,"issiki":433395.0,"sunglass":0.0,"lens":59400.0,"repair":84270.0,"frame":0.0,"qty":5},"2026-2-1":{"sales":936880,"visitors":10,"newCust":2,"repeat":8,"issiki":712580.0,"sunglass":58300.0,"lens":57200.0,"repair":108800.0,"frame":0.0,"qty":7},"2026-2-2":{"sales":320925,"visitors":5,"newCust":0,"repeat":5,"issiki":64900.0,"sunglass":0.0,"lens":39600.0,"repair":56925.0,"frame":159500.0,"qty":1},"2026-2-3":{"sales":495000,"visitors":3,"newCust":0,"repeat":3,"issiki":495000.0,"sunglass":0.0,"lens":0.0,"repair":0.0,"frame":0.0,"qty":4},"2026-2-4":{"sales":935070,"visitors":10,"newCust":6,"repeat":4,"issiki":568700.0,"sunglass":281120.0,"lens":81400.0,"repair":3850.0,"frame":0.0,"qty":6},"2026-2-5":{"sales":132880,"visitors":3,"newCust":0,"repeat":3,"issiki":60500.0,"sunglass":0.0,"lens":67100.0,"repair":5280.0,"frame":0.0,"qty":1},"2026-2-6":{"sales":200200,"visitors":2,"newCust":0,"repeat":2,"issiki":113300.0,"sunglass":0.0,"lens":83600.0,"repair":3300.0,"frame":0.0,"qty":1},"2026-2-7":{"sales":241150,"visitors":6,"newCust":2,"repeat":4,"issiki":135300.0,"sunglass":0.0,"lens":105300.0,"repair":550.0,"frame":0.0,"qty":2},"2026-2-8":{"sales":476550,"visitors":7,"newCust":2,"repeat":5,"issiki":345600.0,"sunglass":0.0,"lens":64900.0,"repair":8050.0,"frame":58000.0,"qty":3},"2026-2-9":{"sales":665500,"visitors":9,"newCust":1,"repeat":8,"issiki":522500.0,"sunglass":0.0,"lens":89100.0,"repair":53900.0,"frame":0.0,"qty":4},"2026-2-10":{"sales":126500,"visitors":2,"newCust":0,"repeat":2,"issiki":0.0,"sunglass":0.0,"lens":123200.0,"repair":3300.0,"frame":0.0,"qty":0},"2026-2-11":{"sales":1325170,"visitors":12,"newCust":0,"repeat":12,"issiki":1007900.0,"sunglass":99000.0,"lens":214600.0,"repair":9570.0,"frame":0.0,"qty":10},"2026-2-12":{"sales":302040,"visitors":4,"newCust":1,"repeat":3,"issiki":243500.0,"sunglass":0.0,"lens":0.0,"repair":47540.0,"frame":0.0,"qty":3},"2026-2-13":{"sales":321900,"visitors":8,"newCust":1,"repeat":7,"issiki":173800.0,"sunglass":50600.0,"lens":39700.0,"repair":20400.0,"frame":37400.0,"qty":3},"2026-2-14":{"sales":1265200,"visitors":12,"newCust":2,"repeat":10,"issiki":1097800.0,"sunglass":62700.0,"lens":24200.0,"repair":38500.0,"frame":42000.0,"qty":10},"2026-2-15":{"sales":801290,"visitors":9,"newCust":2,"repeat":7,"issiki":686400.0,"sunglass":0.0,"lens":98000.0,"repair":16890.0,"frame":0.0,"qty":7},"2026-2-16":{"sales":158400,"visitors":2,"newCust":1,"repeat":1,"issiki":158400.0,"sunglass":0.0,"lens":0.0,"repair":0.0,"frame":0.0,"qty":2},"2026-2-17":{"sales":371600,"visitors":5,"newCust":0,"repeat":5,"issiki":354500.0,"sunglass":79200.0,"lens":28000.0,"repair":6600.0,"frame":0.0,"qty":4},"2026-2-18":{"sales":180060,"visitors":3,"newCust":1,"repeat":2,"issiki":333600.0,"sunglass":0.0,"lens":0.0,"repair":11660.0,"frame":0.0,"qty":3},"2026-2-19":{"sales":219960,"visitors":5,"newCust":1,"repeat":4,"issiki":124080.0,"sunglass":62000.0,"lens":28600.0,"repair":5280.0,"frame":0.0,"qty":2},"2026-2-20":{"sales":1007950,"visitors":7,"newCust":1,"repeat":6,"issiki":896500.0,"sunglass":0.0,"lens":34100.0,"repair":13550.0,"frame":63800.0,"qty":6},"2026-2-21":{"sales":270700,"visitors":4,"newCust":1,"repeat":3,"issiki":92400.0,"sunglass":0.0,"lens":58300.0,"repair":120000.0,"frame":0.0,"qty":1},"2026-2-22":{"sales":1120800,"visitors":16,"newCust":2,"repeat":14,"issiki":971200.0,"sunglass":0.0,"lens":145200.0,"repair":4400.0,"frame":0.0,"qty":10},"2026-2-23":{"sales":568260,"visitors":10,"newCust":1,"repeat":9,"issiki":319000.0,"sunglass":0.0,"lens":247500.0,"repair":1760.0,"frame":0.0,"qty":4},"2026-2-24":{"sales":292700,"visitors":6,"newCust":0,"repeat":6,"issiki":85800.0,"sunglass":0.0,"lens":119200.0,"repair":45000.0,"frame":52800.0,"qty":1},"2026-2-25":{"sales":512240,"visitors":8,"newCust":1,"repeat":7,"issiki":352880.0,"sunglass":0.0,"lens":87000.0,"repair":17560.0,"frame":54800.0,"qty":4},"2026-2-26":{"sales":518720,"visitors":4,"newCust":0,"repeat":4,"issiki":440000.0,"sunglass":0.0,"lens":40000.0,"repair":38720.0,"frame":0.0,"qty":3},"2026-2-27":{"sales":259600,"visitors":3,"newCust":2,"repeat":1,"issiki":88000.0,"sunglass":0.0,"lens":0.0,"repair":6600.0,"frame":165000.0,"qty":1},"2026-2-28":{"sales":1826300,"visitors":8,"newCust":0,"repeat":8,"issiki":1734920.0,"sunglass":0.0,"lens":50600.0,"repair":40780.0,"frame":0.0,"qty":6},"2026-3-1":{"sales":1126510,"visitors":13,"newCust":3,"repeat":10,"issiki":847060.0,"sunglass":0.0,"lens":138400.0,"repair":56050.0,"frame":85000.0,"qty":10},"2026-3-2":{"sales":636840,"visitors":5,"newCust":0,"repeat":5,"issiki":305800.0,"sunglass":0.0,"lens":31900.0,"repair":316140.0,"frame":0.0,"qty":3},"2026-3-3":{"sales":667500,"visitors":4,"newCust":1,"repeat":3,"issiki":423100.0,"sunglass":135000.0,"lens":0.0,"repair":0.0,"frame":178000.0,"qty":4},"2026-3-4":{"sales":591000,"visitors":7,"newCust":1,"repeat":6,"issiki":317900.0,"sunglass":0.0,"lens":39600.0,"repair":187300.0,"frame":46200.0,"qty":4},"2026-3-5":{"sales":371310,"visitors":8,"newCust":4,"repeat":4,"issiki":266300.0,"sunglass":0.0,"lens":102700.0,"repair":2310.0,"frame":0.0,"qty":4},"2026-3-6":{"sales":282400,"visitors":6,"newCust":0,"repeat":6,"issiki":203500.0,"sunglass":0.0,"lens":78900.0,"repair":0.0,"frame":0.0,"qty":2},"2026-3-7":{"sales":712822,"visitors":8,"newCust":3,"repeat":5,"issiki":383922.0,"sunglass":182600.0,"lens":97900.0,"repair":48400.0,"frame":0.0,"qty":4},"2026-3-8":{"sales":863280,"visitors":9,"newCust":4,"repeat":5,"issiki":631180.0,"sunglass":192500.0,"lens":35200.0,"repair":4400.0,"frame":0.0,"qty":7},"2026-3-9":{"sales":196900,"visitors":2,"newCust":1,"repeat":1,"issiki":99800.0,"sunglass":0.0,"lens":38500.0,"repair":58600.0,"frame":0.0,"qty":1},"2026-3-10":{"sales":210830,"visitors":3,"newCust":1,"repeat":2,"issiki":218300.0,"sunglass":0.0,"lens":15400.0,"repair":92430.0,"frame":0.0,"qty":2},"2026-3-11":{"sales":362770,"visitors":4,"newCust":1,"repeat":3,"issiki":269200.0,"sunglass":0.0,"lens":0.0,"repair":44570.0,"frame":49000.0,"qty":3},"2026-3-12":{"sales":427900,"visitors":5,"newCust":2,"repeat":3,"issiki":364900.0,"sunglass":0.0,"lens":4400.0,"repair":58600.0,"frame":0.0,"qty":5},"2026-3-13":{"sales":59680,"visitors":2,"newCust":0,"repeat":2,"issiki":0.0,"sunglass":0.0,"lens":34100.0,"repair":25580.0,"frame":0.0,"qty":0},"2026-3-14":{"sales":1446250,"visitors":10,"newCust":4,"repeat":6,"issiki":1002700.0,"sunglass":214500.0,"lens":95100.0,"repair":133950.0,"frame":0.0,"qty":7},"2026-3-15":{"sales":1307500,"visitors":12,"newCust":3,"repeat":9,"issiki":1051100.0,"sunglass":206800.0,"lens":60500.0,"repair":16700.0,"frame":0.0,"qty":9},"2026-3-16":{"sales":166100,"visitors":2,"newCust":0,"repeat":2,"issiki":77000.0,"sunglass":0.0,"lens":80300.0,"repair":8800.0,"frame":0.0,"qty":1},"2026-3-17":{"sales":617340,"visitors":4,"newCust":1,"repeat":3,"issiki":448940.0,"sunglass":107800.0,"lens":0.0,"repair":60600.0,"frame":0.0,"qty":3},"2026-3-18":{"sales":640938,"visitors":7,"newCust":3,"repeat":4,"issiki":579778.0,"sunglass":0.0,"lens":53900.0,"repair":7260.0,"frame":0.0,"qty":5},"2026-3-19":{"sales":336600,"visitors":3,"newCust":0,"repeat":3,"issiki":323400.0,"sunglass":0.0,"lens":0.0,"repair":13200.0,"frame":0.0,"qty":2},"2026-3-20":{"sales":873070,"visitors":7,"newCust":1,"repeat":6,"issiki":739200.0,"sunglass":57200.0,"lens":74800.0,"repair":1870.0,"frame":0.0,"qty":5},"2026-3-21":{"sales":986640,"visitors":8,"newCust":3,"repeat":5,"issiki":852800.0,"sunglass":114400.0,"lens":0.0,"repair":19440.0,"frame":0.0,"qty":7},"2026-3-22":{"sales":867160,"visitors":11,"newCust":5,"repeat":6,"issiki":721800.0,"sunglass":96300.0,"lens":45100.0,"repair":3960.0,"frame":0.0,"qty":8},"2026-3-23":{"sales":273600,"visitors":4,"newCust":1,"repeat":3,"issiki":264800.0,"sunglass":0.0,"lens":0.0,"repair":8800.0,"frame":0.0,"qty":3},"2026-3-24":{"sales":446050,"visitors":4,"newCust":4,"repeat":0,"issiki":244200.0,"sunglass":155100.0,"lens":0.0,"repair":46750.0,"frame":0.0,"qty":3},"2026-3-25":{"sales":64730,"visitors":2,"newCust":0,"repeat":2,"issiki":152240.0,"sunglass":0.0,"lens":0.0,"repair":3300.0,"frame":0.0,"qty":2},"2026-3-26":{"sales":411400,"visitors":7,"newCust":3,"repeat":4,"issiki":282700.0,"sunglass":0.0,"lens":73700.0,"repair":4400.0,"frame":0.0,"qty":3},"2026-3-27":{"sales":643600,"visitors":4,"newCust":2,"repeat":2,"issiki":306900.0,"sunglass":0.0,"lens":28600.0,"repair":308100.0,"frame":0.0,"qty":3},"2026-3-28":{"sales":1286040,"visitors":15,"newCust":5,"repeat":10,"issiki":1136800.0,"sunglass":29700.0,"lens":115500.0,"repair":27060.0,"frame":54780.0,"qty":9},"2026-3-29":{"sales":1071800,"visitors":12,"newCust":1,"repeat":11,"issiki":822680.0,"sunglass":71500.0,"lens":92400.0,"repair":85220.0,"frame":0.0,"qty":9},"2026-3-30":{"sales":583200,"visitors":7,"newCust":0,"repeat":7,"issiki":432000.0,"sunglass":99000.0,"lens":0.0,"repair":4200.0,"frame":0.0,"qty":4},"2026-3-31":{"sales":453450,"visitors":5,"newCust":2,"repeat":3,"issiki":338500.0,"sunglass":36300.0,"lens":23100.0,"repair":55550.0,"frame":0.0,"qty":3},"2026-4-1":{"sales":966650,"visitors":5,"newCust":5,"repeat":0,"issiki":473200.0,"sunglass":399500.0,"lens":0.0,"repair":93950.0,"frame":0.0,"qty":4},"2026-4-2":{"sales":135550,"visitors":4,"newCust":0,"repeat":4,"issiki":52000.0,"sunglass":0.0,"lens":45100.0,"repair":1450.0,"frame":37000.0,"qty":1},"2026-4-3":{"sales":395240,"visitors":4,"newCust":1,"repeat":3,"issiki":301600.0,"sunglass":0.0,"lens":47000.0,"repair":4840.0,"frame":0.0,"qty":2},"2026-4-4":{"sales":1013650,"visitors":11,"newCust":4,"repeat":7,"issiki":658500.0,"sunglass":0.0,"lens":52500.0,"repair":176550.0,"frame":111800.0,"qty":6},"2026-4-5":{"sales":1564600,"visitors":17,"newCust":9,"repeat":8,"issiki":1339200.0,"sunglass":143000.0,"lens":0.0,"repair":82400.0,"frame":0.0,"qty":15},"2026-4-6":{"sales":301460,"visitors":6,"newCust":2,"repeat":4,"issiki":199600.0,"sunglass":0.0,"lens":86680.0,"repair":15180.0,"frame":0.0,"qty":2},"2026-4-7":{"sales":703280,"visitors":6,"newCust":1,"repeat":5,"issiki":521180.0,"sunglass":0.0,"lens":74800.0,"repair":14300.0,"frame":93000.0,"qty":3},"2026-4-8":{"sales":200280,"visitors":7,"newCust":0,"repeat":7,"issiki":83600.0,"sunglass":46200.0,"lens":45100.0,"repair":25380.0,"frame":0.0,"qty":1},"2026-4-9":{"sales":523800,"visitors":7,"newCust":0,"repeat":7,"issiki":335500.0,"sunglass":0.0,"lens":38500.0,"repair":102800.0,"frame":47000.0,"qty":4},"2026-4-10":{"sales":352550,"visitors":3,"newCust":1,"repeat":2,"issiki":287650.0,"sunglass":0.0,"lens":64900.0,"repair":0.0,"frame":0.0,"qty":2},"2026-4-11":{"sales":562440,"visitors":4,"newCust":0,"repeat":4,"issiki":325280.0,"sunglass":0.0,"lens":178200.0,"repair":58960.0,"frame":0.0,"qty":4},"2026-4-12":{"sales":2764780,"visitors":26,"newCust":7,"repeat":19,"issiki":2106980.0,"sunglass":172900.0,"lens":251500.0,"repair":233400.0,"frame":0.0,"qty":19},"2026-4-13":{"sales":864380,"visitors":10,"newCust":3,"repeat":7,"issiki":837100.0,"sunglass":0.0,"lens":22000.0,"repair":5280.0,"frame":0.0,"qty":9},"2026-4-14":{"sales":958310,"visitors":8,"newCust":2,"repeat":6,"issiki":489300.0,"sunglass":198000.0,"lens":169950.0,"repair":101060.0,"frame":0.0,"qty":4},"2026-4-15":{"sales":373480,"visitors":5,"newCust":3,"repeat":2,"issiki":126500.0,"sunglass":198400.0,"lens":29000.0,"repair":19580.0,"frame":0.0,"qty":2},"2026-4-16":{"sales":474870,"visitors":6,"newCust":2,"repeat":4,"issiki":227700.0,"sunglass":110110.0,"lens":52800.0,"repair":1760.0,"frame":82500.0,"qty":2},"2026-4-17":{"sales":119900,"visitors":4,"newCust":1,"repeat":3,"issiki":64900.0,"sunglass":0.0,"lens":44000.0,"repair":11000.0,"frame":0.0,"qty":1},"2026-4-18":{"sales":1754760,"visitors":18,"newCust":10,"repeat":8,"issiki":1480780.0,"sunglass":115500.0,"lens":70100.0,"repair":88380.0,"frame":0.0,"qty":14},"2026-4-19":{"sales":826570,"visitors":9,"newCust":5,"repeat":4,"issiki":599220.0,"sunglass":0.0,"lens":92400.0,"repair":92950.0,"frame":42000.0,"qty":6},"2026-4-20":{"sales":282150,"visitors":5,"newCust":1,"repeat":4,"issiki":257950.0,"sunglass":0.0,"lens":24200.0,"repair":0.0,"frame":0.0,"qty":3},"2026-4-21":{"sales":556180,"visitors":6,"newCust":2,"repeat":4,"issiki":337180.0,"sunglass":0.0,"lens":77600.0,"repair":74300.0,"frame":67100.0,"qty":3},"2026-4-22":{"sales":571060,"visitors":6,"newCust":4,"repeat":2,"issiki":454900.0,"sunglass":67870.0,"lens":0.0,"repair":48290.0,"frame":0.0,"qty":4},"2026-4-23":{"sales":248660,"visitors":4,"newCust":3,"repeat":1,"issiki":199600.0,"sunglass":0.0,"lens":48400.0,"repair":660.0,"frame":0.0,"qty":2},"2026-4-24":{"sales":463800,"visitors":5,"newCust":1,"repeat":4,"issiki":640700.0,"sunglass":0.0,"lens":23100.0,"repair":0.0,"frame":0.0,"qty":5},"2026-4-25":{"sales":799425,"visitors":11,"newCust":2,"repeat":9,"issiki":412500.0,"sunglass":195800.0,"lens":67100.0,"repair":17875.0,"frame":106150.0,"qty":5},"2026-4-26":{"sales":1347310,"visitors":16,"newCust":7,"repeat":9,"issiki":903300.0,"sunglass":104610.0,"lens":118100.0,"repair":77600.0,"frame":143700.0,"qty":7},"2026-4-27":{"sales":236900,"visitors":2,"newCust":2,"repeat":0,"issiki":166100.0,"sunglass":0.0,"lens":37800.0,"repair":33000.0,"frame":0.0,"qty":1},"2026-4-28":{"sales":226800,"visitors":4,"newCust":2,"repeat":2,"issiki":91000.0,"sunglass":94000.0,"lens":41800.0,"repair":0.0,"frame":0.0,"qty":1},"2026-4-29":{"sales":1185478,"visitors":14,"newCust":6,"repeat":8,"issiki":803250.0,"sunglass":99650.0,"lens":35200.0,"repair":24800.0,"frame":292578.0,"qty":10},"2026-4-30":{"sales":391500,"visitors":6,"newCust":0,"repeat":6,"issiki":342800.0,"sunglass":0.0,"lens":86900.0,"repair":111800.0,"frame":0.0,"qty":3},"2026-5-1":{"sales":1088560,"visitors":13,"newCust":4,"repeat":9,"issiki":719800.0,"sunglass":107800.0,"lens":188500.0,"repair":37260.0,"frame":35200.0,"qty":7},"2026-5-2":{"sales":1140040,"visitors":12,"newCust":3,"repeat":9,"issiki":775200.0,"sunglass":104500.0,"lens":79200.0,"repair":66300.0,"frame":114840.0,"qty":6},"2026-5-3":{"sales":1180950,"visitors":12,"newCust":4,"repeat":8,"issiki":663200.0,"sunglass":302550.0,"lens":53900.0,"repair":34700.0,"frame":30000.0,"qty":6},"2026-5-4":{"sales":1638650,"visitors":15,"newCust":4,"repeat":11,"issiki":1373550.0,"sunglass":0.0,"lens":142700.0,"repair":122400.0,"frame":0.0,"qty":13},"2026-5-5":{"sales":1052280,"visitors":9,"newCust":4,"repeat":5,"issiki":791500.0,"sunglass":0.0,"lens":113300.0,"repair":147480.0,"frame":0.0,"qty":6},"2026-5-6":{"sales":921220,"visitors":9,"newCust":3,"repeat":6,"issiki":687200.0,"sunglass":0.0,"lens":28000.0,"repair":11220.0,"frame":194800.0,"qty":7},"2026-5-7":{"sales":585550,"visitors":7,"newCust":2,"repeat":5,"issiki":476650.0,"sunglass":0.0,"lens":25300.0,"repair":0.0,"frame":0.0,"qty":6},"2026-5-8":{"sales":736180,"visitors":9,"newCust":3,"repeat":6,"issiki":341000.0,"sunglass":201000.0,"lens":74300.0,"repair":880.0,"frame":119000.0,"qty":4},"2026-5-9":{"sales":976320,"visitors":12,"newCust":1,"repeat":11,"issiki":697620.0,"sunglass":37400.0,"lens":61600.0,"repair":150000.0,"frame":29700.0,"qty":7},"2026-5-10":{"sales":825950,"visitors":11,"newCust":2,"repeat":9,"issiki":400200.0,"sunglass":131000.0,"lens":191400.0,"repair":63350.0,"frame":40000.0,"qty":4},"2026-5-11":{"sales":460800,"visitors":8,"newCust":3,"repeat":5,"issiki":197700.0,"sunglass":216900.0,"lens":46200.0,"repair":0.0,"frame":0.0,"qty":3},"2026-5-12":{"sales":326000,"visitors":2,"newCust":1,"repeat":1,"issiki":186000.0,"sunglass":0.0,"lens":0.0,"repair":140000.0,"frame":0.0,"qty":2},"2026-5-13":{"sales":573100,"visitors":6,"newCust":3,"repeat":3,"issiki":309100.0,"sunglass":0.0,"lens":93500.0,"repair":170500.0,"frame":0.0,"qty":3},"2026-5-14":{"sales":771200,"visitors":7,"newCust":4,"repeat":3,"issiki":492900.0,"sunglass":73700.0,"lens":99800.0,"repair":28600.0,"frame":11000.0,"qty":3},"2026-5-15":{"sales":519400,"visitors":5,"newCust":1,"repeat":4,"issiki":390100.0,"sunglass":0.0,"lens":45100.0,"repair":84200.0,"frame":0.0,"qty":3},"2026-5-16":{"sales":942840,"visitors":8,"newCust":1,"repeat":7,"issiki":787000.0,"sunglass":0.0,"lens":153200.0,"repair":2640.0,"frame":0.0,"qty":6},"2026-5-17":{"sales":1229250,"visitors":14,"newCust":3,"repeat":11,"issiki":615700.0,"sunglass":374000.0,"lens":39600.0,"repair":82250.0,"frame":117700.0,"qty":6},"2026-5-18":{"sales":297800,"visitors":7,"newCust":2,"repeat":5,"issiki":0.0,"sunglass":184500.0,"lens":106700.0,"repair":0.0,"frame":0.0,"qty":0},"2026-5-19":{"sales":113300,"visitors":3,"newCust":1,"repeat":2,"issiki":0.0,"sunglass":86900.0,"lens":24200.0,"repair":2200.0,"frame":0.0,"qty":0},"2026-5-20":{"sales":219600,"visitors":4,"newCust":1,"repeat":3,"issiki":251600.0,"sunglass":0.0,"lens":42200.0,"repair":0.0,"frame":0.0,"qty":3},"2026-5-21":{"sales":186340,"visitors":5,"newCust":1,"repeat":4,"issiki":88000.0,"sunglass":0.0,"lens":62700.0,"repair":9240.0,"frame":0.0,"qty":1},"2026-5-22":{"sales":367400,"visitors":4,"newCust":2,"repeat":2,"issiki":300300.0,"sunglass":39600.0,"lens":18700.0,"repair":8800.0,"frame":0.0,"qty":2},"2026-5-23":{"sales":375100,"visitors":3,"newCust":0,"repeat":3,"issiki":347600.0,"sunglass":0.0,"lens":0.0,"repair":27500.0,"frame":0.0,"qty":3},"2026-5-24":{"sales":1635020,"visitors":16,"newCust":3,"repeat":13,"issiki":1488500.0,"sunglass":67100.0,"lens":15400.0,"repair":64020.0,"frame":0.0,"qty":15},"2026-5-25":{"sales":143980,"visitors":3,"newCust":1,"repeat":2,"issiki":102000.0,"sunglass":0.0,"lens":37000.0,"repair":4980.0,"frame":0.0,"qty":1},"2026-5-26":{"sales":262590,"visitors":2,"newCust":1,"repeat":1,"issiki":145000.0,"sunglass":81400.0,"lens":33000.0,"repair":3190.0,"frame":0.0,"qty":1},"2026-5-27":{"sales":371400,"visitors":3,"newCust":2,"repeat":1,"issiki":234000.0,"sunglass":78000.0,"lens":50600.0,"repair":8800.0,"frame":0.0,"qty":2},"2026-5-28":{"sales":566500,"visitors":7,"newCust":2,"repeat":5,"issiki":289300.0,"sunglass":86900.0,"lens":30800.0,"repair":0.0,"frame":159500.0,"qty":2},"2026-5-29":{"sales":678400,"visitors":4,"newCust":2,"repeat":2,"issiki":461300.0,"sunglass":0.0,"lens":0.0,"repair":217100.0,"frame":0.0,"qty":4},"2026-5-30":{"sales":706710,"visitors":8,"newCust":2,"repeat":6,"issiki":663400.0,"sunglass":0.0,"lens":19700.0,"repair":23610.0,"frame":0.0,"qty":6},"2026-5-31":{"sales":597950,"visitors":9,"newCust":2,"repeat":7,"issiki":468700.0,"sunglass":0.0,"lens":87450.0,"repair":41800.0,"frame":0.0,"qty":4},"2026-6-1":{"sales":792960,"visitors":4,"newCust":1,"repeat":3,"issiki":724700,"sunglass":36000,"lens":35200,"repair":74860,"frame":0,"qty":3,"brands":{"OBJ":2,"TOMFORD(SG)":1,"その他国内(SG)":1}},"2026-6-2":{"sales":620100,"visitors":4,"newCust":2,"repeat":2,"issiki":578300,"sunglass":0,"lens":0,"repair":41800,"frame":0,"qty":4,"brands":{"Even":1,"EYEVAN系(Optical)":2,"その他海外(Optical)":1}},"2026-6-3":{"sales":347110,"visitors":5,"newCust":0,"repeat":5,"issiki":229410,"sunglass":0,"lens":35200,"repair":11000,"frame":71500,"qty":3,"brands":{"OP":1,"その他国内(Optical)":3}},"2026-6-4":{"sales":439200,"visitors":5,"newCust":1,"repeat":4,"issiki":198100,"sunglass":0,"lens":182500,"repair":58600,"frame":0,"qty":2,"brands":{"OBJ":1,"Even":1}},"2026-6-5":{"sales":742600,"visitors":9,"newCust":3,"repeat":6,"issiki":580900,"sunglass":0,"lens":148500,"repair":13200,"frame":0,"qty":5,"brands":{"Even":1,"EYEVAN系(Optical)":1,"その他海外(Optical)":2,"その他国内(Optical)":1}},"2026-6-6":{"sales":1045600,"visitors":11,"newCust":5,"repeat":6,"issiki":974800,"sunglass":0,"lens":66400,"repair":4400,"frame":0,"qty":9,"brands":{"JMM":1,"Even":2,"TOMFORD(Optical)":1,"ic!berlin":1,"スポーツ系":1,"その他国内(Optical)":3}},"2025-12-30":{"sales":1131730,"visitors":13,"newCust":2,"repeat":11,"issiki":922950.0,"sunglass":137500.0,"lens":70400.0,"repair":880.0,"frame":0.0,"qty":8},"2025-12-29":{"sales":1107130,"visitors":16,"newCust":4,"repeat":12,"issiki":946250.0,"sunglass":0.0,"lens":155100.0,"repair":3780.0,"frame":0.0,"qty":11},"2025-12-28":{"sales":2852610,"visitors":28,"newCust":5,"repeat":23,"issiki":2349900.0,"sunglass":273800.0,"lens":218900.0,"repair":21110.0,"frame":56000.0,"qty":24},"2025-12-27":{"sales":1407560,"visitors":19,"newCust":5,"repeat":14,"issiki":1164460.0,"sunglass":0.0,"lens":243100.0,"repair":0.0,"frame":0.0,"qty":12},"2025-12-26":{"sales":1013810,"visitors":14,"newCust":7,"repeat":7,"issiki":738810.0,"sunglass":0.0,"lens":143000.0,"repair":16500.0,"frame":115500.0,"qty":7},"2025-12-19":{"sales":666705,"visitors":9,"newCust":3,"repeat":6,"issiki":545100.0,"sunglass":57200.0,"lens":44000.0,"repair":20405.0,"frame":0.0,"qty":5},"2025-12-20":{"sales":973770,"visitors":15,"newCust":3,"repeat":12,"issiki":722970.0,"sunglass":0.0,"lens":242000.0,"repair":8800.0,"frame":0.0,"qty":8},"2025-12-21":{"sales":1211780,"visitors":15,"newCust":1,"repeat":14,"issiki":972400.0,"sunglass":167000.0,"lens":67100.0,"repair":5280.0,"frame":0.0,"qty":10},"2025-12-22":{"sales":360800,"visitors":4,"newCust":2,"repeat":2,"issiki":330000.0,"sunglass":0.0,"lens":30800.0,"repair":0.0,"frame":0.0,"qty":3},"2025-12-23":{"sales":662550,"visitors":7,"newCust":2,"repeat":5,"issiki":260500.0,"sunglass":353650.0,"lens":48400.0,"repair":0.0,"frame":0.0,"qty":2},"2025-12-24":{"sales":1555200,"visitors":7,"newCust":4,"repeat":3,"issiki":188100.0,"sunglass":917200.0,"lens":33000.0,"repair":132900.0,"frame":284000.0,"qty":2},"2025-12-25":{"sales":629100,"visitors":7,"newCust":1,"repeat":6,"issiki":563100.0,"sunglass":0.0,"lens":63800.0,"repair":2200.0,"frame":0.0,"qty":5},"2025-12-18":{"sales":492200,"visitors":8,"newCust":0,"repeat":8,"issiki":340600.0,"sunglass":0.0,"lens":101200.0,"repair":6400.0,"frame":44000.0,"qty":4},"2025-12-17":{"sales":548090,"visitors":6,"newCust":2,"repeat":4,"issiki":425200.0,"sunglass":0.0,"lens":115500.0,"repair":7390.0,"frame":0.0,"qty":5},"2025-12-16":{"sales":779900,"visitors":9,"newCust":1,"repeat":8,"issiki":675400,"sunglass":0,"lens":47300,"repair":0,"frame":57200,"qty":6},"2025-12-1":{"sales":140400,"visitors":2,"newCust":1,"repeat":1,"issiki":0,"sunglass":47300,"lens":25000,"repair":68100,"frame":0,"qty":0},"2025-12-2":{"sales":439200,"visitors":7,"newCust":0,"repeat":7,"issiki":299200,"sunglass":0,"lens":93800,"repair":0,"frame":46200,"qty":4},"2025-12-3":{"sales":68200,"visitors":2,"newCust":1,"repeat":1,"issiki":0,"sunglass":35200,"lens":24200,"repair":8800,"frame":0,"qty":0},"2025-12-4":{"sales":1312570,"visitors":10,"newCust":2,"repeat":8,"issiki":991870,"sunglass":159500,"lens":89100,"repair":29200,"frame":42900,"qty":8},"2025-12-5":{"sales":178400,"visitors":3,"newCust":1,"repeat":2,"issiki":130000,"sunglass":0,"lens":48400,"repair":0,"frame":0,"qty":1},"2025-12-6":{"sales":1395020,"visitors":20,"newCust":3,"repeat":17,"issiki":1048850,"sunglass":0,"lens":193600,"repair":3960,"frame":148610,"qty":13},"2025-12-7":{"sales":2136300,"visitors":21,"newCust":1,"repeat":20,"issiki":1563800,"sunglass":188600,"lens":84100,"repair":0,"frame":0,"qty":17},"2025-12-8":{"sales":782780,"visitors":12,"newCust":0,"repeat":12,"issiki":662500,"sunglass":0,"lens":114800,"repair":0,"frame":0,"qty":7},"2025-12-9":{"sales":605970,"visitors":4,"newCust":0,"repeat":4,"issiki":588480,"sunglass":0,"lens":11000,"repair":6490,"frame":0,"qty":5},"2025-12-10":{"sales":820320,"visitors":12,"newCust":0,"repeat":12,"issiki":650070,"sunglass":28050,"lens":133400,"repair":8800,"frame":0,"qty":6},"2025-12-11":{"sales":1182250,"visitors":6,"newCust":1,"repeat":5,"issiki":1024050,"sunglass":130000,"lens":20500,"repair":7700,"frame":0,"qty":7},"2025-12-12":{"sales":677160,"visitors":5,"newCust":1,"repeat":4,"issiki":618200,"sunglass":0,"lens":55000,"repair":3960,"frame":0,"qty":4},"2025-12-13":{"sales":1806500,"visitors":18,"newCust":5,"repeat":13,"issiki":1541280,"sunglass":181500,"lens":59400,"repair":17620,"frame":63800,"qty":16},"2025-12-14":{"sales":1329450,"visitors":16,"newCust":4,"repeat":12,"issiki":1183610,"sunglass":0,"lens":69300,"repair":26540,"frame":50000,"qty":13},"2025-12-15":{"sales":356875,"visitors":5,"newCust":2,"repeat":3,"issiki":164925,"sunglass":146300,"lens":25300,"repair":20350,"frame":0,"qty":3},"2026-6-8":{"sales":446600,"visitors":4,"newCust":2,"repeat":2,"issiki":421300,"sunglass":0,"lens":7700,"repair":17600,"frame":0,"qty":3,"brands":{"OBJ":1,"JMM":2}},"2026-6-7":{"sales":1731340,"visitors":21,"newCust":7,"repeat":14,"issiki":1198700,"sunglass":362000,"lens":241700,"repair":5040,"frame":0,"qty":13,"brands":{"OBJ":3,"JMM":1,"Even":2,"TOMFORD(SG)":1,"JDO":2,"AKONI(SG)":1,"DITA(Optical)":1,"ic!berlin":1,"EYEVAN系(Optical)":1,"スポーツ系":1,"その他海外(Optical)":2}},"2026-6-9":{"sales":380050,"visitors":4,"newCust":1,"repeat":3,"issiki":267850,"sunglass":95700,"lens":16500,"repair":0,"frame":0,"qty":2,"brands":{"TOMFORD(Optical)":1,"TOMFORD(SG)":1,"スポーツ系":1,"その他海外(Optical)":1}},"2026-6-10":{"sales":1108720,"visitors":9,"newCust":3,"repeat":6,"issiki":851340,"sunglass":0,"lens":169600,"repair":87780,"frame":0,"qty":7,"brands":{"Even":1,"OP":1,"DITA(Optical)":1,"KameManNen":1,"BJ":1,"その他海外(Optical)":2}},"2026-6-11":{"sales":1202000,"visitors":8,"newCust":3,"repeat":5,"issiki":934100,"sunglass":150700,"lens":0,"repair":117200,"frame":0,"qty":9,"brands":{"Even":3,"DITA(Optical)":1,"EYEVAN系(Optical)":1,"ayame":1,"その他海外(Optical)":2,"その他海外(SG)":1,"その他国内(Optical)":1}},"2026-6-12":{"sales":502160,"visitors":10,"newCust":1,"repeat":9,"issiki":175560,"sunglass":77000,"lens":77000,"repair":28500,"frame":144100,"qty":2,"brands":{"TOMFORD(Optical)":2,"LINDBERG":1,"BJ":1,"その他海外(Optical)":1}},"2026-6-13":{"sales":1386290,"visitors":12,"newCust":3,"repeat":9,"issiki":876220,"sunglass":179830,"lens":126300,"repair":203940,"frame":0,"qty":5,"brands":{"Even":2,"AKONI(Optical)":1,"ic!berlin":2,"MYKITA":1,"EYEVAN系(Optical)":1,"スポーツ系":1}},"2026-6-14":{"sales":568690,"visitors":7,"newCust":3,"repeat":4,"issiki":453800,"sunglass":0,"lens":41800,"repair":73090,"frame":0,"qty":5,"brands":{"OBJ":1,"Even":2,"MYKITA":1,"その他海外(Optical)":1}},"2026-6-15":{"sales":270600,"visitors":3,"newCust":0,"repeat":3,"issiki":221100,"sunglass":0,"lens":46200,"repair":3300,"frame":0,"qty":2,"brands":{"AKONI(Optical)":1,"その他国内(Optical)":1}}},"weekly":{"2026-W3":{"weekStart":"2026-1-12","brands":{"OBJ":7,"JMM":1,"Even":0,"OP":0,"TOMFORD(Optical)":0,"TOMFORD(SG)":1,"RIGARDS":1,"JDO":0,"AKONI(Optical)":0,"AKONI(SG)":0,"DITA(Optical)":1,"DITA(SG)":1,"ic!berlin":1,"LINDBERG":0,"MYKITA":2,"MATSUDA(Optical)":0,"MATSUDA(SG)":0,"KameManNen":0,"EYEVAN系(Optical)":3,"EYEVAN系(SG)":2,"ayame":1,"BJ":1,"スポーツ系":3,"その他海外(Optical)":7,"その他海外(SG)":4,"その他国内(Optical)":5,"その他国内(SG)":0}},"2026-W4":{"weekStart":"2026-1-19","brands":{"OBJ":3,"JMM":2,"Even":0,"OP":0,"TOMFORD(Optical)":0,"TOMFORD(SG)":0,"RIGARDS":0,"JDO":2,"AKONI(Optical)":0,"AKONI(SG)":0,"DITA(Optical)":0,"DITA(SG)":0,"ic!berlin":0,"LINDBERG":1,"MYKITA":2,"MATSUDA(Optical)":0,"MATSUDA(SG)":0,"KameManNen":3,"EYEVAN系(Optical)":1,"EYEVAN系(SG)":2,"ayame":0,"BJ":0,"スポーツ系":0,"その他海外(Optical)":4,"その他海外(SG)":0,"その他国内(Optical)":3,"その他国内(SG)":0}},"2026-W5":{"weekStart":"2026-1-26","brands":{"OBJ":2,"JMM":0,"Even":0,"OP":1,"TOMFORD(Optical)":1,"TOMFORD(SG)":0,"RIGARDS":0,"JDO":0,"AKONI(Optical)":0,"AKONI(SG)":0,"DITA(Optical)":0,"DITA(SG)":0,"ic!berlin":1,"LINDBERG":0,"MYKITA":1,"MATSUDA(Optical)":0,"MATSUDA(SG)":0,"KameManNen":2,"EYEVAN系(Optical)":0,"EYEVAN系(SG)":0,"ayame":0,"BJ":1,"スポーツ系":1,"その他海外(Optical)":6,"その他海外(SG)":1,"その他国内(Optical)":2,"その他国内(SG)":0}}},"monthly":{"2026-6":{},"2026-5":{"brands":{"OBJ":9,"JMM":9,"Even":22,"OP":5,"TOMFORD(Optical)":3,"TOMFORD(SG)":2,"RIGARDS":2,"JDO":3,"AKONI(Optical)":0,"AKONI(SG)":1,"DITA(Optical)":5,"DITA(SG)":0,"ic!berlin":2,"LINDBERG":6,"MYKITA":2,"MATSUDA(Optical)":1,"MATSUDA(SG)":3,"KameManNen":13,"EYEVAN系(Optical)":16,"EYEVAN系(SG)":7,"ayame":8,"BJ":0,"スポーツ系":8,"その他海外(Optical)":20,"その他海外(SG)":8,"その他国内(Optical)":20,"その他国内(SG)":4}},"2026-4":{"brands":{"OBJ":12,"JMM":3,"Even":25,"OP":5,"TOMFORD(Optical)":3,"TOMFORD(SG)":3,"RIGARDS":5,"JDO":5,"AKONI(Optical)":0,"AKONI(SG)":0,"DITA(Optical)":7,"DITA(SG)":0,"ic!berlin":8,"LINDBERG":8,"MYKITA":3,"MATSUDA(Optical)":0,"MATSUDA(SG)":2,"KameManNen":9,"EYEVAN系(Optical)":13,"EYEVAN系(SG)":11,"ayame":5,"BJ":4,"スポーツ系":5,"その他海外(Optical)":28,"その他海外(SG)":5,"その他国内(Optical)":22,"その他国内(SG)":1}},"2026-3":{"brands":{"OBJ":14,"JMM":11,"Even":12,"OP":3,"TOMFORD(Optical)":3,"TOMFORD(SG)":5,"RIGARDS":2,"JDO":3,"AKONI(Optical)":2,"AKONI(SG)":0,"DITA(Optical)":0,"DITA(SG)":0,"ic!berlin":1,"LINDBERG":8,"MYKITA":1,"MATSUDA(Optical)":3,"MATSUDA(SG)":2,"KameManNen":2,"EYEVAN系(Optical)":15,"EYEVAN系(SG)":6,"ayame":8,"BJ":3,"スポーツ系":1,"その他海外(Optical)":28,"その他海外(SG)":7,"その他国内(Optical)":24,"その他国内(SG)":2}},"2026-2":{"brands":{"OBJ":12,"JMM":6,"Even":1,"OP":3,"TOMFORD(Optical)":4,"TOMFORD(SG)":5,"RIGARDS":5,"JDO":6,"AKONI(Optical)":1,"AKONI(SG)":0,"DITA(Optical)":4,"DITA(SG)":1,"ic!berlin":3,"LINDBERG":1,"MYKITA":3,"MATSUDA(Optical)":1,"MATSUDA(SG)":0,"KameManNen":5,"EYEVAN系(Optical)":13,"EYEVAN系(SG)":4,"ayame":2,"BJ":1,"スポーツ系":5,"その他海外(Optical)":24,"その他海外(SG)":0,"その他国内(Optical)":19,"その他国内(SG)":0}}},"events":[{"id":"ev_mykita_2026","name":"MYKITA TRUNK SHOW","type":"trunk","brand":"MYKITA","start":"2026-06-13","end":"2026-06-21","sales":0,"qty":0,"note":""},{"id":"ev_lindberg_2026","name":"LINDBERG TRUNK SHOW","type":"trunk","brand":"LINDBERG","start":"2026-07-11","end":"2026-07-13","sales":0,"qty":0,"note":""}]};
+var DB;
+
+function loadDB(){
+  try{
+    var r=localStorage.getItem(STORAGE_KEY);
+    if(!r) r=localStorage.getItem('obj_sales_v1');
+    if(r){
+      var s=JSON.parse(r);
+      // 6月のmonthly.brandsを削除（誤データ修正）
+      if(s.monthly&&s.monthly['2026-6']&&s.monthly['2026-6'].brands){
+        delete s.monthly['2026-6'].brands;
+      }
+      // INITIAL_DBにある日次ブランドデータをlocalStorageに補完
+      var ikeys=Object.keys(INITIAL_DB.daily||{});
+      for(var ii=0;ii<ikeys.length;ii++){
+        var ik=ikeys[ii];
+        var initR=INITIAL_DB.daily[ik];
+        if(initR&&initR.brands&&Object.keys(initR.brands).length>0){
+          if(s.daily&&s.daily[ik]&&(!s.daily[ik].brands||Object.keys(s.daily[ik].brands||{}).length===0)){
+            s.daily[ik].brands=initR.brands;
+          }
+        }
+      }
+      var sd=Object.keys(s.daily||{}).length;
+      var id=Object.keys(INITIAL_DB.daily||{}).length;
+      var se=(s.events||[]).length;
+      var ie=(INITIAL_DB.events||[]).length;
+      if(id>sd||ie>se){
+        var dd=JSON.parse(JSON.stringify(INITIAL_DB));
+        saveDB(dd);return dd;
+      }
+      if(ie>0&&se===0)s.events=INITIAL_DB.events;
+      saveDB(s);
+      return s;
+    }
+  }catch(e){}
+  var d=JSON.parse(JSON.stringify(INITIAL_DB));
+  saveDB(d);return d;
+}
+function saveDB(d){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(d));}catch(e){}}
+
+// ══ 集計 ══
+function aggregateMonth(y,m){
+  var r={sales:0,visitors:0,newCust:0,repeat:0,issiki:0,sunglass:0,lens:0,repair:0,frame:0,qty:0};
+  var days=new Date(y,m,0).getDate();
+  for(var d=1;d<=days;d++){
+    var rec=DB.daily[dKey(y,m,d)];
+    if(!rec)continue;
+    var keys=Object.keys(r);
+    for(var i=0;i<keys.length;i++) r[keys[i]]+=(rec[keys[i]]||0);
+  }
+  var manual=DB.monthly[mKey(y,m)]||{};
+  if(manual.sales)r.sales=manual.sales;
+  if(manual.visitors)r.visitors=manual.visitors;
+  if(manual.qty)r.qty=manual.qty;
+  r.online=manual.online||0;
+  r.totalSales=r.sales+r.online;
+  return r;
+}
+function aggregateBrandsForMonth(y,m){
+  var totals={};
+  for(var i=0;i<BRANDS.length;i++)totals[BRANDS[i]]=0;
+  // ① 日次データから集計（最優先：日報入力が基本）
+  var dkeys=Object.keys(DB.daily);
+  var hasDailyData=false;
+  for(var i=0;i<dkeys.length;i++){
+    var parts=dkeys[i].split('-');
+    if(parseInt(parts[0])===y&&parseInt(parts[1])===m){
+      var r=DB.daily[dkeys[i]];
+      if(r&&r.brands&&Object.keys(r.brands).length>0){
+        hasDailyData=true;
+        for(var bi=0;bi<BRANDS.length;bi++){
+          totals[BRANDS[bi]]+=(r.brands[BRANDS[bi]]||0);
+        }
+      }
+    }
+  }
+  if(hasDailyData)return totals;
+  // ② 月次手動ブランドデータ（日次がない場合のみ参照）
+  var manual=DB.monthly[mKey(y,m)];
+  if(manual&&manual.brands&&Object.keys(manual.brands).length>0)return manual.brands;
+  // ② INITIAL_DBの月次ブランドデータをフォールバックとして参照
+  var initManual=INITIAL_DB.monthly[mKey(y,m)];
+  if(initManual&&initManual.brands&&Object.keys(initManual.brands).length>0)return initManual.brands;
+  // ③ 週次データから集計（日次・月次ともにない場合）
+  var wkeys=Object.keys(DB.weekly);
+  for(var wi=0;wi<wkeys.length;wi++){
+    var v=DB.weekly[wkeys[wi]];
+    if(!v||!v.weekStart)continue;
+    var ws=v.weekStart.split('-');
+    var wsDate=new Date(parseInt(ws[0]),parseInt(ws[1])-1,parseInt(ws[2]));
+    var we=new Date(wsDate);we.setDate(we.getDate()+6);
+    if((wsDate.getFullYear()===y&&wsDate.getMonth()+1===m)||(we.getFullYear()===y&&we.getMonth()+1===m)){
+      for(var bi=0;bi<BRANDS.length;bi++) totals[BRANDS[bi]]+=(v.brands[BRANDS[bi]]||0);
+    }
+  }
+  return totals;
+}
+function getYearsWithData(){
+  var ys={};
+  var dkeys=Object.keys(DB.daily);
+  for(var i=0;i<dkeys.length;i++){
+    var r=DB.daily[dkeys[i]];
+    if(r&&r.sales>0) ys[parseInt(dkeys[i].split('-')[0])]=1;
+  }
+  var mkeys=Object.keys(DB.monthly);
+  for(var i=0;i<mkeys.length;i++){
+    var v=DB.monthly[mkeys[i]];
+    if(v&&v.sales>0) ys[parseInt(mkeys[i].split('-')[0])]=1;
+  }
+  if(Object.keys(ys).length===0) ys[CURRENT_YEAR]=1;
+  var arr=[];
+  var ykeys=Object.keys(ys);
+  for(var i=0;i<ykeys.length;i++) arr.push(parseInt(ykeys[i]));
+  arr.sort(function(a,b){return a-b;});
+  return arr;
+}
+
+// ══ ナビゲーション ══
+function showPage(p){
+  var pages=document.querySelectorAll('.page');
+  for(var i=0;i<pages.length;i++) pages[i].classList.remove('active');
+  var navs=document.querySelectorAll('.nav-btn');
+  for(var i=0;i<navs.length;i++) navs[i].classList.remove('active');
+  var pg=document.getElementById('page-'+p);
+  if(pg) pg.classList.add('active');
+  var nb=document.getElementById('nav-'+p);
+  if(nb) nb.classList.add('active');
+  if(p==='daily') initDailyPage();
+  if(p==='monthly') initMonthlyPage();
+  if(p==='event'){renderEventList();updateEventChart();}
+  if(p==='settings'){renderBrandMasterList();updateApiKeyStatus();}
+  window.scrollTo(0,0);
+}
+
+// ══ 年タブ ══
+function buildYearTabs(){
+  var years=getYearsWithData();
+  var el=document.getElementById('yearTabs');
+  if(!el)return;
+  var html='<button class="ytab'+(currentYear==='all'?' active':'')+'" onclick="setYear(\'all\')">全年</button>';
+  for(var i=0;i<years.length;i++){
+    html+='<button class="ytab'+(currentYear===years[i]?' active':'')+'" onclick="setYear('+years[i]+')">'+years[i]+'年</button>';
+  }
+  el.innerHTML=html;
+}
+function setYear(y){currentYear=y;buildYearTabs();updateDashboard();}
+
+// ══ Canvas ══
+function clearCanvas(id){
+  var c=document.getElementById(id);
+  if(!c)return null;
+  var w=c.parentElement.clientWidth||c.parentElement.offsetWidth||300;
+  var dpr=window.devicePixelRatio||1;
+  c.width=w*dpr;
+  var hStyle=c.parentElement.style.height||'200px';
+  var h=parseInt(hStyle)||200;
+  c.height=h*dpr;
+  c.style.width=w+'px';
+  c.style.height=h+'px';
+  var ctx=c.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,w,h);
+  return {ctx:ctx,w:w,h:h,c:c};
+}
+
+// ══ KPI ══
+function setDelta(id,cur,prev){
+  var el=document.getElementById(id);
+  if(!el||!prev)return;
+  var d=((cur-prev)/prev*100).toFixed(1);
+  var up=parseFloat(d)>=0;
+  el.className='kpi-delta '+(up?'up':'down');
+  el.textContent=(up?'▲':'▼')+Math.abs(d)+'%';
+}
+function updateKPI(){
+  var years=currentYear==='all'?getYearsWithData():[currentYear];
+  var tot={sales:0,visitors:0,qty:0};
+  for(var yi=0;yi<years.length;yi++){
+    for(var m=1;m<=12;m++){
+      var r=aggregateMonth(years[yi],m);
+      tot.sales+=r.totalSales;
+      tot.visitors+=r.visitors;
+      tot.qty+=r.qty;
+    }
+  }
+  var avg=tot.qty?Math.round(tot.sales/tot.qty):0;
+  var kv=document.getElementById('kpiSales');if(kv)kv.textContent=fmt(tot.sales);
+  var kvi=document.getElementById('kpiVisitors');if(kvi)kvi.textContent=tot.visitors+'名';
+  var kq=document.getElementById('kpiQty');if(kq)kq.textContent=tot.qty+'本';
+  var ka=document.getElementById('kpiAvg');if(ka)ka.textContent=fmt(avg);
+}
+
+// ══ 売上グラフ ══
+function updateMonthlyChart(){
+  var years=currentYear==='all'?getYearsWithData():[currentYear];
+  var labels=[],vals=[];
+  for(var yi=0;yi<years.length;yi++){
+    for(var m=1;m<=12;m++){
+      var r=aggregateMonth(years[yi],m);
+      if(!r.totalSales)continue;
+      labels.push(years[yi]+'年'+m+'月');
+      vals.push(r.totalSales);
+    }
+  }
+  var cv=clearCanvas('chartMonthly');
+  if(!cv)return;
+  var ctx=cv.ctx,w=cv.w,h=cv.h;
+  var pad={t:20,r:20,b:30,l:60};
+  var cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  if(!labels.length){ctx.fillStyle='#7a82a0';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('データなし',w/2,h/2);return;}
+  var maxV=Math.max.apply(null,vals)*1.1||1;
+  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;
+  for(var g=0;g<=4;g++){
+    var gy=pad.t+ch*(1-g/4);
+    ctx.beginPath();ctx.moveTo(pad.l,gy);ctx.lineTo(pad.l+cw,gy);ctx.stroke();
+    ctx.fillStyle='#7a82a0';ctx.font='10px sans-serif';ctx.textAlign='right';
+    ctx.fillText(Math.round(maxV*g/4/10000)+'万',pad.l-4,gy+4);
+  }
+  var step=cw/(labels.length-1||1);
+  ctx.strokeStyle='#5b8dee';ctx.lineWidth=2.5;ctx.beginPath();
+  for(var i=0;i<vals.length;i++){
+    var x=pad.l+i*step;
+    var y=pad.t+ch*(1-vals[i]/maxV);
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  for(var i=0;i<vals.length;i++){
+    var x=pad.l+i*step;
+    var y=pad.t+ch*(1-vals[i]/maxV);
+    ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle='#5b8dee';ctx.fill();
+    if(labels.length<=12){
+      var lb=labels[i].replace(/\d{4}年/,'');
+      ctx.fillStyle='#7a82a0';ctx.font='9px sans-serif';ctx.textAlign='center';
+      ctx.fillText(lb,x,h-8);
+    }
+  }
+  // ツールチップ
+  var canvas=cv.c;
+  canvas._monthlyLabels=labels;
+  canvas._monthlyVals=vals;
+  canvas._monthlyPad=pad;
+  canvas._monthlyCh=ch;
+  canvas._monthlyMaxV=maxV;
+  canvas._monthlyStep=step;
+
+  function showMonthlyTip(e){
+    var rect=canvas.getBoundingClientRect();
+    var px=e.touches?e.touches[0].clientX-rect.left:e.clientX-rect.left;
+    var lbs=canvas._monthlyLabels;
+    var stp=canvas._monthlyStep;
+    var pl=canvas._monthlyPad.l;
+    var closest=-1,minDist=30;
+    for(var i=0;i<lbs.length;i++){
+      var ix=pl+i*stp;
+      var dist=Math.abs(px-ix);
+      if(dist<minDist){minDist=dist;closest=i;}
+    }
+    if(closest<0){hideMonthlyTip();return;}
+    var tip=document.getElementById('monthlyTooltip');
+    if(!tip){
+      tip=document.createElement('div');
+      tip.id='monthlyTooltip';
+      tip.style.cssText='position:fixed;background:rgba(20,23,32,0.95);border:1px solid #5b8dee;border-radius:8px;padding:8px 12px;font-size:12px;color:#e8eaf0;pointer-events:none;z-index:500;white-space:nowrap;';
+      document.body.appendChild(tip);
+    }
+    tip.innerHTML='<span style="color:#5b8dee;">●</span> <strong>'+lbs[closest]+'</strong><br>¥'+canvas._monthlyVals[closest].toLocaleString();
+    tip.style.display='block';
+    var tx=e.touches?e.touches[0].clientX:e.clientX;
+    var ty=e.touches?e.touches[0].clientY:e.clientY;
+    tip.style.left=(tx+12)+'px';
+    tip.style.top=(ty-40)+'px';
+  }
+  function hideMonthlyTip(){var tip=document.getElementById('monthlyTooltip');if(tip)tip.style.display='none';}
+  canvas.onmousemove=showMonthlyTip;
+  canvas.onmouseleave=hideMonthlyTip;
+  canvas.addEventListener('touchstart',function(e){showMonthlyTip(e);},{passive:true});
+  canvas.addEventListener('touchend',function(){setTimeout(hideMonthlyTip,1500);});
+}
+function toggleMonthlyData(){
+  var panel=document.getElementById('monthlyDataPanel');
+  if(!panel)return;
+  if(panel.style.display!=='none'){panel.style.display='none';return;}
+  var years=currentYear==='all'?getYearsWithData():[currentYear];
+  var rows=[];
+  for(var yi=0;yi<years.length;yi++){
+    for(var m=1;m<=12;m++){
+      var r=aggregateMonth(years[yi],m);
+      if(!r.totalSales&&!r.visitors)continue;
+      rows.push({y:years[yi],m:m,r:r});
+    }
+  }
+  rows.reverse();
+  var html='<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr>';
+  html+='<th style="color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border);font-size:10px;">年月</th>';
+  html+='<th style="color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;font-size:10px;">売上</th>';
+  html+='<th style="color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;font-size:10px;">来客</th>';
+  html+='<th style="color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;font-size:10px;">本数</th>';
+  html+='</tr></thead><tbody>';
+  for(var i=0;i<rows.length;i++){
+    var row=rows[i];
+    html+='<tr><td style="padding:7px 8px;border-bottom:1px solid #1a1e28;color:var(--accent2);">'+row.y+'年'+row.m+'月</td>';
+    html+='<td style="padding:7px 8px;border-bottom:1px solid #1a1e28;text-align:right;">¥'+row.r.totalSales.toLocaleString()+'</td>';
+    html+='<td style="padding:7px 8px;border-bottom:1px solid #1a1e28;text-align:right;">'+row.r.visitors+'名</td>';
+    html+='<td style="padding:7px 8px;border-bottom:1px solid #1a1e28;text-align:right;">'+row.r.qty+'本</td></tr>';
+  }
+  html+='</tbody></table>';
+  document.getElementById('monthlyDataTable').innerHTML=html;
+  panel.style.display='block';
+}
+
+// ══ ブランドグラフ ══
+function updateBrandView(){
+  var sel=document.getElementById('brandMonthSel');
+  var mSel=sel?parseInt(sel.value)||'all':null;
+  var years=currentYear==='all'?getYearsWithData():[currentYear];
+  var totals={};
+  for(var bi=0;bi<BRANDS.length;bi++)totals[BRANDS[bi]]=0;
+  for(var yi=0;yi<years.length;yi++){
+    if(mSel==='all'){
+      for(var m=1;m<=12;m++){
+        var bd=aggregateBrandsForMonth(years[yi],m);
+        for(var bi=0;bi<BRANDS.length;bi++) totals[BRANDS[bi]]+=(bd[BRANDS[bi]]||0);
+      }
+    }else{
+      var bd=aggregateBrandsForMonth(years[yi],mSel);
+      for(var bi=0;bi<BRANDS.length;bi++) totals[BRANDS[bi]]+=(bd[BRANDS[bi]]||0);
+    }
+  }
+  var pairs=[];
+  for(var bi=0;bi<BRANDS.length;bi++){
+    if(totals[BRANDS[bi]]>0) pairs.push([BRANDS[bi],totals[BRANDS[bi]]]);
+  }
+  pairs.sort(function(a,b){return b[1]-a[1];});
+  var labels=[],values=[];
+  for(var i=0;i<pairs.length;i++){labels.push(pairs[i][0]);values.push(pairs[i][1]);}
+
+  var cv=clearCanvas('chartBrand');
+  if(!cv)return;
+  var ctx=cv.ctx,w=cv.w,h=cv.h;
+  if(!labels.length){ctx.fillStyle='#7a82a0';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('データなし',w/2,h/2);return;}
+  var colors=['#5b8dee','#e8c96d','#5ddbb4','#e85b7a','#ff9f4a','#b47dee','#5bc8ee','#ee8d5b','#8dee5b','#ee5bb4'];
+  var grand=0;for(var i=0;i<values.length;i++)grand+=values[i];
+  var top8=pairs.slice(0,8);
+  var otherVal=0;for(var i=8;i<pairs.length;i++)otherVal+=pairs[i][1];
+  var dispPairs=top8.slice();
+  if(otherVal>0)dispPairs.push(['その他',otherVal]);
+
+  // 凡例の高さを計算してドーナツの位置を決める
+  var legRowH=18;
+  var legH=dispPairs.length*legRowH+8;
+  var chartH=h-legH;
+  var cx=w/2,cy=chartH/2;
+  var radius=Math.min(w*0.42,chartH*0.42);
+  var innerR=radius*0.55;
+
+  // ドーナツ描画
+  var startAngle=-Math.PI/2;
+  for(var i=0;i<dispPairs.length;i++){
+    var angle=(dispPairs[i][1]/grand)*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,radius,startAngle,startAngle+angle);
+    ctx.closePath();ctx.fillStyle=colors[i%colors.length];ctx.fill();
+    startAngle+=angle;
+  }
+  // 中心穴
+  ctx.beginPath();ctx.arc(cx,cy,innerR,0,Math.PI*2);ctx.fillStyle='#141720';ctx.fill();
+  // 合計本数
+  ctx.fillStyle='#e8eaf0';ctx.font='bold 18px sans-serif';ctx.textAlign='center';
+  ctx.fillText(grand+'本',cx,cy+6);
+  ctx.fillStyle='#7a82a0';ctx.font='10px sans-serif';
+  ctx.fillText('合計',cx,cy-10);
+
+  // 凡例（ドーナツ下、2列）
+  var legTop=chartH+4;
+  var colW=Math.floor(w/2);
+  for(var i=0;i<dispPairs.length;i++){
+    var col=colors[i%colors.length];
+    var col_x=(i%2===0)?4:colW+4;
+    var row_y=legTop+Math.floor(i/2)*legRowH;
+    ctx.fillStyle=col;ctx.fillRect(col_x,row_y,10,10);
+    ctx.fillStyle='#e8eaf0';ctx.font='10px sans-serif';ctx.textAlign='left';
+    var name=dispPairs[i][0].length>9?dispPairs[i][0].slice(0,9)+'…':dispPairs[i][0];
+    ctx.fillText(name,col_x+13,row_y+9);
+  }
+  // タッチ・ホバーでツールチップ
+  var canvas=cv.c;
+  canvas._brandPairs=dispPairs;
+  canvas._brandColors=colors;
+  canvas._grand=grand;
+  canvas._cx=cx;canvas._cy=cy;canvas._radius=radius;canvas._innerR=innerR;
+
+  function showBrandTip(e){
+    var rect=canvas.getBoundingClientRect();
+    var px,py;
+    if(e.touches){px=e.touches[0].clientX-rect.left;py=e.touches[0].clientY-rect.top;}
+    else{px=e.clientX-rect.left;py=e.clientY-rect.top;}
+    var dpr=window.devicePixelRatio||1;
+    var scaleX=canvas.width/(rect.width*dpr);
+    var scaleY=canvas.height/(rect.height*dpr);
+    var dx=px-canvas._cx,dy=py-canvas._cy;
+    var dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<canvas._innerR||dist>canvas._radius){hideBrandTip();return;}
+    var angle=Math.atan2(dy,dx);
+    if(angle<-Math.PI/2)angle+=Math.PI*2;
+    var startA=-Math.PI/2,found=null;
+    for(var i=0;i<canvas._brandPairs.length;i++){
+      var a=(canvas._brandPairs[i][1]/canvas._grand)*Math.PI*2;
+      if(angle>=startA&&angle<startA+a){found=i;break;}
+      startA+=a;
+    }
+    if(found===null){hideBrandTip();return;}
+    var pair=canvas._brandPairs[found];
+    var pct=((pair[1]/canvas._grand)*100).toFixed(1);
+    var tip=document.getElementById('brandTooltip');
+    if(!tip){
+      tip=document.createElement('div');
+      tip.id='brandTooltip';
+      tip.style.cssText='position:fixed;background:rgba(20,23,32,0.95);border:1px solid #5b8dee;border-radius:8px;padding:8px 12px;font-size:12px;color:#e8eaf0;pointer-events:none;z-index:500;white-space:nowrap;';
+      document.body.appendChild(tip);
+    }
+    tip.innerHTML='<span style="color:'+canvas._brandColors[found%canvas._brandColors.length]+';">●</span> <strong>'+pair[0]+'</strong><br>'+pair[1]+'本 / '+pct+'%';
+    tip.style.display='block';
+    var tx=e.touches?e.touches[0].clientX:e.clientX;
+    var ty=e.touches?e.touches[0].clientY:e.clientY;
+    tip.style.left=(tx+12)+'px';
+    tip.style.top=(ty-30)+'px';
+  }
+  function hideBrandTip(){
+    var tip=document.getElementById('brandTooltip');
+    if(tip)tip.style.display='none';
+  }
+  canvas.onmousemove=showBrandTip;
+  canvas.onmouseleave=hideBrandTip;
+  canvas.addEventListener('touchstart',function(e){showBrandTip(e);},{passive:true});
+  canvas.addEventListener('touchend',function(){
+    setTimeout(hideBrandTip,1500);
+    toggleBrandData();
+  });
+}
+function toggleBrandData(){
+  var panel=document.getElementById('brandDataPanel');
+  if(!panel)return;
+  if(panel.style.display!=='none'){panel.style.display='none';return;}
+  var sel=document.getElementById('brandMonthSel');
+  var mSel=sel?sel.value:'all';
+  var years=currentYear==='all'?getYearsWithData():[currentYear];
+  var totals={};
+  for(var bi=0;bi<BRANDS.length;bi++)totals[BRANDS[bi]]=0;
+
+  if(mSel==='all'){
+    // 全月合計
+    for(var yi=0;yi<years.length;yi++){
+      for(var m=1;m<=12;m++){
+        var bd=aggregateBrandsForMonth(years[yi],m);
+        for(var bi=0;bi<BRANDS.length;bi++) totals[BRANDS[bi]]+=(bd[BRANDS[bi]]||0);
+      }
+    }
+  } else {
+    // 選択月のみ
+    for(var yi=0;yi<years.length;yi++){
+      var bd=aggregateBrandsForMonth(years[yi],parseInt(mSel));
+      for(var bi=0;bi<BRANDS.length;bi++) totals[BRANDS[bi]]+=(bd[BRANDS[bi]]||0);
+    }
+  }
+
+  var pairs=[];
+  for(var bi=0;bi<BRANDS.length;bi++){
+    if(totals[BRANDS[bi]]>0) pairs.push([BRANDS[bi],totals[BRANDS[bi]]]);
+  }
+  pairs.sort(function(a,b){return b[1]-a[1];});
+  var grand=0;for(var i=0;i<pairs.length;i++) grand+=pairs[i][1];
+
+  var mLabel=mSel==='all'?'全月合計':mSel+'月';
+  var html='<div style="font-size:11px;color:var(--accent2);font-weight:700;margin-bottom:8px;">'+mLabel+'　ブランド別販売本数</div>';
+  html+='<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr>';
+  html+='<th style="color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border);font-size:10px;text-align:left;">ブランド</th>';
+  html+='<th style="color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;font-size:10px;">本数</th>';
+  html+='<th style="color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;font-size:10px;">シェア</th>';
+  html+='</tr></thead><tbody>';
+  for(var i=0;i<pairs.length;i++){
+    var pct=grand?((pairs[i][1]/grand)*100).toFixed(1):'0.0';
+    html+='<tr><td style="padding:7px 8px;border-bottom:1px solid #1a1e28;">'+pairs[i][0]+'</td>';
+    html+='<td style="padding:7px 8px;border-bottom:1px solid #1a1e28;text-align:right;color:var(--accent2);font-weight:700;">'+pairs[i][1]+'本</td>';
+    html+='<td style="padding:7px 8px;border-bottom:1px solid #1a1e28;text-align:right;color:var(--muted);">'+pct+'%</td></tr>';
+  }
+  html+='<tr><td style="padding:7px 8px;font-weight:700;">合計</td>';
+  html+='<td style="padding:7px 8px;text-align:right;font-weight:700;color:var(--accent2);">'+grand+'本</td>';
+  html+='<td style="padding:7px 8px;text-align:right;">100%</td></tr>';
+  html+='</tbody></table>';
+  document.getElementById('brandDataTable').innerHTML=html;
+  panel.style.display='block';
+}
+
+// ══ カテゴリグラフ ══
+function updateCategoryChart(){
+  var years=currentYear==='all'?getYearsWithData():[currentYear];
+  var cats={issiki:0,sunglass:0,lens:0,repair:0,frame:0};
+  for(var yi=0;yi<years.length;yi++){
+    for(var m=1;m<=12;m++){
+      var r=aggregateMonth(years[yi],m);
+      cats.issiki+=r.issiki;
+      cats.sunglass+=r.sunglass;
+      cats.lens+=r.lens;
+      cats.repair+=r.repair;
+      cats.frame+=r.frame;
+    }
+  }
+  var labels=['一式','SG','レンズ','修理等','フレーム'];
+  var values=[cats.issiki,cats.sunglass,cats.lens,cats.repair,cats.frame];
+  var colors=['#5b8dee','#e8c96d','#5ddbb4','#e85b7a','#ff9f4a'];
+  var cv=clearCanvas('chartCategory');
+  if(!cv)return;
+  var ctx=cv.ctx,w=cv.w,h=cv.h;
+  var total=0;for(var i=0;i<values.length;i++)total+=values[i];
+  if(!total){ctx.fillStyle='#7a82a0';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('データなし',w/2,h/2);return;}
+  var cx=w/2-40,cy=h/2,radius=Math.min(cx,cy)*0.75;
+  var startAngle=-Math.PI/2;
+  for(var i=0;i<values.length;i++){
+    if(!values[i])continue;
+    var angle=(values[i]/total)*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,radius,startAngle,startAngle+angle);
+    ctx.closePath();ctx.fillStyle=colors[i];ctx.fill();
+    startAngle+=angle;
+  }
+  var legendX=w-90,legendY=20;
+  for(var i=0;i<labels.length;i++){
+    if(!values[i])continue;
+    ctx.fillStyle=colors[i];ctx.fillRect(legendX,legendY+i*22,12,12);
+    ctx.fillStyle='#e8eaf0';ctx.font='10px sans-serif';ctx.textAlign='left';
+    ctx.fillText(labels[i]+' '+((values[i]/total)*100).toFixed(0)+'%',legendX+16,legendY+i*22+10);
+  }
+}
+
+// ══ 曜日別グラフ ══
+function updateWeekdayChart(){
+  var metric=document.getElementById('weekdayMetric')?document.getElementById('weekdayMetric').value:'sales';
+  var years=currentYear==='all'?getYearsWithData():[currentYear];
+  var stats=[];
+  for(var di=0;di<7;di++)stats.push({sales:0,visitors:0,count:0});
+  for(var yi=0;yi<years.length;yi++){
+    var dkeys=Object.keys(DB.daily);
+    for(var ki=0;ki<dkeys.length;ki++){
+      var k=dkeys[ki];
+      if(k.indexOf(years[yi]+'-')!==0)continue;
+      var r=DB.daily[k];
+      if(!r||!r.sales)continue;
+      var parts=k.split('-');
+      var date=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
+      var dow=date.getDay();
+      stats[dow].sales+=r.sales||0;
+      stats[dow].visitors+=r.visitors||0;
+      stats[dow].count++;
+    }
+  }
+  var DAYS=['日','月','火','水','木','金','土'];
+  var DAY_COLORS=['#e85b7a','#7a82a0','#7a82a0','#7a82a0','#7a82a0','#7a82a0','#5b8dee'];
+  var lbl=document.getElementById('weekdayLabel');
+  if(lbl)lbl.textContent='曜日別'+(metric==='sales'?'平均売上':'平均来客数');
+  var cv=clearCanvas('chartWeekday');
+  if(!cv)return;
+  var ctx=cv.ctx,w=cv.w,h=cv.h;
+  var pad={t:20,r:20,b:30,l:55};
+  var cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  var vals=[];
+  for(var i=0;i<7;i++){
+    var s=stats[i];
+    vals.push(s.count?Math.round(metric==='sales'?s.sales/s.count:s.visitors/s.count):0);
+  }
+  var maxV=Math.max.apply(null,vals)*1.15||1;
+  var bw=Math.floor(cw/7)-6;
+  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;
+  for(var g=0;g<=4;g++){
+    var gy=pad.t+ch*(1-g/4);
+    ctx.beginPath();ctx.moveTo(pad.l,gy);ctx.lineTo(pad.l+cw,gy);ctx.stroke();
+    ctx.fillStyle='#7a82a0';ctx.font='10px sans-serif';ctx.textAlign='right';
+    ctx.fillText(metric==='sales'?Math.round(maxV*g/4/10000)+'万':Math.round(maxV*g/4),pad.l-4,gy+4);
+  }
+  for(var i=0;i<7;i++){
+    var x=pad.l+i*(bw+6)+3;
+    var bh2=(vals[i]/maxV)*ch;
+    var y=pad.t+ch-bh2;
+    ctx.fillStyle=DAY_COLORS[i];ctx.globalAlpha=0.85;
+    ctx.fillRect(x,y,bw,bh2);ctx.globalAlpha=1;
+    ctx.fillStyle=DAY_COLORS[i];ctx.font='bold 11px sans-serif';ctx.textAlign='center';
+    ctx.fillText(DAYS[i],x+bw/2,h-8);
+    if(vals[i]>0){
+      ctx.fillStyle='#e8eaf0';ctx.font='10px sans-serif';
+      ctx.fillText(metric==='sales'?Math.round(vals[i]/10000)+'万':vals[i]+'名',x+bw/2,Math.max(y-4,pad.t+4));
+    }
+  }
+}
+
+// ══ リピートトレンド ══
+function updateRepeatChart(){
+  var years=currentYear==='all'?getYearsWithData():[currentYear];
+  var labels=[],newData=[],repData=[],repRateData=[];
+  for(var yi=0;yi<years.length;yi++){
+    for(var m=1;m<=12;m++){
+      var r=aggregateMonth(years[yi],m);
+      if(!r.visitors)continue;
+      labels.push(years[yi]+'年'+m+'月');
+      newData.push(r.newCust||0);
+      repData.push(r.repeat||0);
+      repRateData.push(Math.round(((r.repeat||0)/r.visitors)*100));
+    }
+  }
+  var cv=clearCanvas('chartRepeat');
+  if(!cv)return;
+  var ctx=cv.ctx,w=cv.w,h=cv.h;
+  var pad={t:24,r:50,b:30,l:35};
+  var cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  if(!labels.length){ctx.fillStyle='#7a82a0';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('データなし',w/2,h/2);return;}
+  var maxStack=0;
+  for(var i=0;i<labels.length;i++) maxStack=Math.max(maxStack,newData[i]+repData[i]);
+  maxStack=maxStack||1;
+  var barW=Math.max(Math.floor(cw/labels.length)-3,4);
+  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;
+  for(var g=0;g<=4;g++){
+    var gy=pad.t+ch*(1-g/4);
+    ctx.beginPath();ctx.moveTo(pad.l,gy);ctx.lineTo(pad.l+cw,gy);ctx.stroke();
+    ctx.fillStyle='#7a82a0';ctx.font='10px sans-serif';ctx.textAlign='right';
+    ctx.fillText(Math.round(maxStack*g/4),pad.l-4,gy+4);
+  }
+  for(var i=0;i<labels.length;i++){
+    var x=pad.l+i*(barW+3);
+    var totalH=(newData[i]+repData[i])/maxStack*ch;
+    var repH=repData[i]/maxStack*ch;
+    var newH=newData[i]/maxStack*ch;
+    ctx.fillStyle='rgba(93,219,180,0.8)';ctx.fillRect(x,pad.t+ch-repH,barW,repH);
+    ctx.fillStyle='rgba(232,201,109,0.8)';ctx.fillRect(x,pad.t+ch-totalH,barW,newH);
+    if(labels.length<=12||(i%2===0)){
+      ctx.fillStyle='#7a82a0';ctx.font='9px sans-serif';ctx.textAlign='center';
+      ctx.fillText((labels[i].replace(/\d{4}年/,'').replace('月',''))+'月',x+barW/2,h-8);
+    }
+  }
+  ctx.strokeStyle='#e85b7a';ctx.lineWidth=2;ctx.beginPath();
+  var started=false;
+  for(var i=0;i<repRateData.length;i++){
+    var x=pad.l+i*(barW+3)+barW/2;
+    var y=pad.t+ch*(1-repRateData[i]/100);
+    if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.fillStyle='#e85b7a';ctx.font='10px sans-serif';ctx.textAlign='left';
+  for(var p=0;p<=4;p++){
+    var ry=pad.t+ch*(1-p/4);
+    ctx.fillText((p*25)+'%',w-pad.r+4,ry+4);
+  }
+
+  // ツールチップ
+  var canvas=cv.c;
+  canvas._repLabels=labels;
+  canvas._repNew=newData;
+  canvas._repRep=repData;
+  canvas._repRate=repRateData;
+  canvas._repPad=pad;
+  canvas._repCh=ch;
+  canvas._repBarW=barW;
+
+  function showRepeatTip(e){
+    var rect=canvas.getBoundingClientRect();
+    var px=e.touches?e.touches[0].clientX-rect.left:e.clientX-rect.left;
+    var lbs=canvas._repLabels;
+    var bw=canvas._repBarW;
+    var pl=canvas._repPad.l;
+    var closest=-1,minDist=bw+6;
+    for(var i=0;i<lbs.length;i++){
+      var ix=pl+i*(bw+3)+bw/2;
+      var dist=Math.abs(px-ix);
+      if(dist<minDist){minDist=dist;closest=i;}
+    }
+    if(closest<0){hideRepeatTip();return;}
+    var total=canvas._repNew[closest]+canvas._repRep[closest];
+    var newPct=total?Math.round(canvas._repNew[closest]/total*100):0;
+    var repPct=total?Math.round(canvas._repRep[closest]/total*100):0;
+    var tip=document.getElementById('repeatTooltip');
+    if(!tip){
+      tip=document.createElement('div');
+      tip.id='repeatTooltip';
+      tip.style.cssText='position:fixed;background:rgba(20,23,32,0.95);border:1px solid #5b8dee;border-radius:8px;padding:8px 12px;font-size:12px;color:#e8eaf0;pointer-events:none;z-index:500;white-space:nowrap;';
+      document.body.appendChild(tip);
+    }
+    tip.innerHTML='<strong style="color:var(--accent2);">'+lbs[closest]+'</strong><br>'+
+      '<span style="color:#e8c96d;">新規: '+canvas._repNew[closest]+'名 ('+newPct+'%)</span><br>'+
+      '<span style="color:#5ddbb4;">リピート: '+canvas._repRep[closest]+'名 ('+repPct+'%)</span><br>'+
+      '<span style="color:#e85b7a;">リピート率: '+canvas._repRate[closest]+'%</span>';
+    tip.style.display='block';
+    var tx=e.touches?e.touches[0].clientX:e.clientX;
+    var ty=e.touches?e.touches[0].clientY:e.clientY;
+    tip.style.left=(tx+12)+'px';
+    tip.style.top=(ty-60)+'px';
+  }
+  function hideRepeatTip(){var tip=document.getElementById('repeatTooltip');if(tip)tip.style.display='none';}
+  canvas.onmousemove=showRepeatTip;
+  canvas.onmouseleave=hideRepeatTip;
+  canvas.addEventListener('touchstart',function(e){showRepeatTip(e);},{passive:true});
+  canvas.addEventListener('touchend',function(){setTimeout(hideRepeatTip,2000);});
+}
+function toggleRepeatData(){
+  var panel=document.getElementById('repeatDataPanel');
+  if(!panel)return;
+  if(panel.style.display!=='none'){panel.style.display='none';return;}
+  var years=currentYear==='all'?getYearsWithData():[currentYear];
+  var rows=[];
+  for(var yi=0;yi<years.length;yi++){
+    for(var m=1;m<=12;m++){
+      var r=aggregateMonth(years[yi],m);
+      if(!r.visitors)continue;
+      rows.push({y:years[yi],m:m,newC:r.newCust||0,rep:r.repeat||0,total:r.visitors,rate:Math.round(((r.repeat||0)/r.visitors)*100)});
+    }
+  }
+  rows.reverse();
+  var html='<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr>';
+  html+='<th style="color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border);font-size:10px;">年月</th>';
+  html+='<th style="color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;font-size:10px;">新規</th>';
+  html+='<th style="color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;font-size:10px;">リピート</th>';
+  html+='<th style="color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;font-size:10px;">率</th>';
+  html+='</tr></thead><tbody>';
+  for(var i=0;i<rows.length;i++){
+    var rv=rows[i];
+    var rateColor=rv.rate>=80?'var(--accent3)':rv.rate>=60?'var(--accent2)':'var(--muted)';
+    html+='<tr><td style="padding:7px 8px;border-bottom:1px solid #1a1e28;color:var(--accent2);">'+rv.y+'年'+rv.m+'月</td>';
+    html+='<td style="padding:7px 8px;border-bottom:1px solid #1a1e28;text-align:right;">'+rv.newC+'名</td>';
+    html+='<td style="padding:7px 8px;border-bottom:1px solid #1a1e28;text-align:right;">'+rv.rep+'名</td>';
+    html+='<td style="padding:7px 8px;border-bottom:1px solid #1a1e28;text-align:right;font-weight:700;color:'+rateColor+';">'+rv.rate+'%</td></tr>';
+  }
+  html+='</tbody></table>';
+  document.getElementById('repeatDataTable').innerHTML=html;
+  panel.style.display='block';
+}
+
+// ══ テーブル ══
+function updateTable(){
+  var years=currentYear==='all'?getYearsWithData():[currentYear];
+  var rows=[];
+  for(var yi=0;yi<years.length;yi++){
+    var prevR=null;
+    for(var m=1;m<=12;m++){
+      var r=aggregateMonth(years[yi],m);
+      if(!r.totalSales&&!r.visitors)continue;
+      var mom='—';
+      if(prevR&&prevR.totalSales) mom=((r.totalSales-prevR.totalSales)/prevR.totalSales*100).toFixed(1);
+      rows.push({y:years[yi],m:m,r:r,mom:mom});
+      prevR=r;
+    }
+  }
+  rows.reverse();
+  var html='';
+  for(var i=0;i<rows.length;i++){
+    var row=rows[i];
+    var momStr=row.mom==='—'?'—':((parseFloat(row.mom)>=0?'<span class="badge b-green">▲':'<span class="badge b-red">▼')+Math.abs(row.mom)+'%</span>');
+    var avg=row.r.qty?Math.round(row.r.totalSales/row.r.qty):0;
+    html+='<tr>';
+    html+='<td style="color:var(--accent2);">'+row.y+'年'+row.m+'月</td>';
+    html+='<td style="text-align:right;">¥'+row.r.totalSales.toLocaleString()+(row.r.online?'<br><span style="font-size:9px;color:var(--muted);">通販¥'+row.r.online.toLocaleString()+'</span>':'')+'</td>';
+    html+='<td style="text-align:right;">'+row.r.visitors+'名</td>';
+    html+='<td style="text-align:right;">'+row.r.qty+'本</td>';
+    html+='<td style="text-align:right;">'+fmt(avg)+'</td>';
+    html+='<td style="text-align:right;">'+momStr+'</td>';
+    html+='</tr>';
+  }
+  var tb=document.getElementById('tableBody');
+  if(tb)tb.innerHTML=html;
+}
+
+// ══ イベント ══
+function updateDashEventSummary(){
+  var el=document.getElementById('dashEventList');
+  if(!el)return;
+  var evs=DB.events||[];
+  if(!evs.length){el.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">イベントなし</div>';return;}
+  var filtered=currentYear==='all'?evs:evs.filter(function(e){return e.start&&e.start.indexOf(String(currentYear))===0;});
+  if(!filtered.length){el.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">'+currentYear+'年のイベントなし</div>';return;}
+  var sorted=filtered.slice().sort(function(a,b){return b.start.localeCompare(a.start);});
+  var html='';
+  var top3=sorted.slice(0,3);
+  for(var i=0;i<top3.length;i++){
+    var ev=top3[i];
+    var col=EV_TYPE_COLOR[ev.type]||'#7a82a0';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">';
+    html+='<div><div style="font-size:12px;font-weight:700;">'+ev.name+'</div>';
+    html+='<div style="font-size:10px;color:var(--muted);">'+ev.start+(ev.brand?' / '+ev.brand:'')+'</div></div>';
+    html+='<div style="text-align:right;"><div style="font-size:12px;color:'+col+';">¥'+Math.round((ev.sales||0)/10000)+'万</div>';
+    html+='<div style="font-size:10px;color:var(--muted);">'+(ev.qty||0)+'本</div></div></div>';
+  }
+  if(filtered.length>3) html+='<div style="text-align:center;margin-top:8px;"><button onclick="showPage(\'event\')" style="background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;">他'+(filtered.length-3)+'件を見る ›</button></div>';
+  el.innerHTML=html;
+}
+function updateEventChart(){
+  var evs=DB.events||[];
+  var filtered=currentYear==='all'?evs:evs.filter(function(e){return e.start&&e.start.indexOf(String(currentYear))===0;});
+  var sorted=filtered.slice().sort(function(a,b){return a.start.localeCompare(b.start);});
+  var labels=[],values=[];
+  for(var i=0;i<sorted.length;i++){
+    labels.push(sorted[i].name.length>8?sorted[i].name.slice(0,8)+'…':sorted[i].name);
+    values.push(sorted[i].sales||0);
+  }
+  var cv=clearCanvas('chartEvent');
+  if(!cv)return;
+  var ctx=cv.ctx,w=cv.w,h=cv.h;
+  if(!labels.length){ctx.fillStyle='#7a82a0';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('データなし',w/2,h/2);return;}
+  var pad={t:10,r:20,b:10,l:110};
+  var ch=h-pad.t-pad.b;
+  var maxV=Math.max.apply(null,values)||1;
+  var bh=Math.max(Math.floor(ch/labels.length)-4,12);
+  for(var i=0;i<labels.length;i++){
+    var y=pad.t+i*(bh+4);
+    var bw=(values[i]/maxV)*(w-pad.l-pad.r);
+    var col=EV_TYPE_COLOR[sorted[i].type]||'#7a82a0';
+    ctx.fillStyle=col;ctx.globalAlpha=0.8;ctx.fillRect(pad.l,y,bw,bh);ctx.globalAlpha=1;
+    ctx.fillStyle='#e8eaf0';ctx.font='10px sans-serif';ctx.textAlign='right';
+    ctx.fillText(labels[i],pad.l-4,y+bh/2+4);
+    ctx.textAlign='left';ctx.font='bold 11px sans-serif';
+    ctx.fillText('¥'+Math.round(values[i]/10000)+'万',pad.l+bw+4,y+bh/2+4);
+  }
+}
+function renderEventList(){
+  var list=document.getElementById('eventList');
+  if(!list)return;
+  if(!DB.events||!DB.events.length){list.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px;">イベントが登録されていません</div>';return;}
+  var sorted=DB.events.slice().sort(function(a,b){return b.start.localeCompare(a.start);});
+  var html='';
+  for(var i=0;i<sorted.length;i++){
+    var ev=sorted[i];
+    var col=EV_TYPE_COLOR[ev.type]||'#7a82a0';
+    var lbl=EV_TYPE_LABEL[ev.type]||ev.type;
+    var dateStr=ev.start===ev.end?ev.start:ev.start+' 〜 '+ev.end;
+    html+='<div class="event-item" onclick="showEventForm(\''+ev.id+'\')"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+    html+='<div class="event-name">'+ev.name+'</div>';
+    html+='<div class="event-type-badge" style="background:'+col+'22;color:'+col+';">'+lbl+'</div></div>';
+    html+='<div class="event-meta">📅 '+dateStr+(ev.brand?' ／ '+ev.brand:'')+'</div>';
+    html+='<div class="event-kpi">';
+    html+='<div class="event-kpi-item"><span>¥'+Math.round((ev.sales||0)/10000)+'万</span>売上</div>';
+    html+='<div class="event-kpi-item"><span>'+(ev.qty||0)+'</span>本</div>';
+    if(ev.note) html+='<div class="event-kpi-item" style="color:var(--muted);">'+ev.note+'</div>';
+    html+='</div></div>';
+  }
+  list.innerHTML=html;
+}
+function showEventForm(id){
+  var fc=document.getElementById('eventFormCard');
+  var ft=document.getElementById('eventFormTitle');
+  var db2=document.getElementById('evDeleteBtn');
+  if(!fc)return;
+  if(id){
+    var ev=null;
+    for(var i=0;i<DB.events.length;i++){if(DB.events[i].id===id){ev=DB.events[i];break;}}
+    if(!ev)return;
+    document.getElementById('evId').value=ev.id;
+    document.getElementById('evName').value=ev.name||'';
+    document.getElementById('evType').value=ev.type||'trunk';
+    document.getElementById('evBrand').value=ev.brand||'';
+    document.getElementById('evStart').value=ev.start||'';
+    document.getElementById('evEnd').value=ev.end||'';
+    document.getElementById('evSales').value=ev.sales||'';
+    document.getElementById('evQty').value=ev.qty||'';
+    document.getElementById('evNote').value=ev.note||'';
+    if(ft)ft.textContent='イベント編集';
+    if(db2)db2.style.display='block';
+  }else{
+    document.getElementById('evId').value='';
+    document.getElementById('evName').value='';
+    document.getElementById('evType').value='trunk';
+    document.getElementById('evBrand').value='';
+    document.getElementById('evStart').value='';
+    document.getElementById('evEnd').value='';
+    document.getElementById('evSales').value='';
+    document.getElementById('evQty').value='';
+    document.getElementById('evNote').value='';
+    if(ft)ft.textContent='イベント登録';
+    if(db2)db2.style.display='none';
+  }
+  fc.style.display='block';
+  fc.scrollIntoView({behavior:'smooth'});
+}
+function hideEventForm(){var fc=document.getElementById('eventFormCard');if(fc)fc.style.display='none';}
+function saveEvent(){
+  var id=document.getElementById('evId').value;
+  var name=document.getElementById('evName').value.trim();
+  if(!name){showToast('イベント名を入力してください',true);return;}
+  var ev={
+    id:id||'ev_'+Date.now(),
+    name:name,
+    type:document.getElementById('evType').value,
+    brand:document.getElementById('evBrand').value.trim(),
+    start:document.getElementById('evStart').value,
+    end:document.getElementById('evEnd').value||document.getElementById('evStart').value,
+    sales:parseInt(document.getElementById('evSales').value)||0,
+    qty:parseInt(document.getElementById('evQty').value)||0,
+    note:document.getElementById('evNote').value.trim()
+  };
+  if(!DB.events)DB.events=[];
+  if(id){
+    for(var i=0;i<DB.events.length;i++){if(DB.events[i].id===id){DB.events[i]=ev;break;}}
+  }else{DB.events.push(ev);}
+  saveDB(DB);renderEventList();updateEventChart();buildYearTabs();updateDashboard();
+  hideEventForm();showToast('イベントを保存しました ✓');
+}
+function deleteEvent(){
+  var id=document.getElementById('evId').value;
+  if(!id)return;
+  DB.events=DB.events.filter(function(e){return e.id!==id;});
+  saveDB(DB);renderEventList();updateEventChart();
+  hideEventForm();showToast('削除しました ✓');
+}
+
+// ══ ダッシュボード ══
+function updateDashboard(){
+  updateKPI();
+  updateMonthlyChart();
+  updateBrandView();
+  updateCategoryChart();
+  updateWeekdayChart();
+  updateRepeatChart();
+  updateTable();
+  updateDashEventSummary();
+  updateDashGoal();
+}
+
+// ══ カレンダー ══
+function initDailyPage(){
+  if(!calYear)calYear=CURRENT_YEAR;
+  if(!calMonth)calMonth=CURRENT_MONTH;
+  renderCalendar();
+}
+function prevMonth(){calMonth--;if(calMonth<1){calMonth=12;calYear--;}renderCalendar();}
+function nextMonth(){calMonth++;if(calMonth>12){calMonth=1;calYear++;}renderCalendar();}
+function renderCalendar(){
+  var lbl=document.getElementById('calMonthLabel');
+  if(lbl)lbl.textContent=calYear+'年 '+calMonth+'月';
+  var days=new Date(calYear,calMonth,0).getDate();
+  var firstDow=new Date(calYear,calMonth-1,1).getDay();
+  var HEADS=['日','月','火','水','木','金','土'];
+  var html='';
+  for(var i=0;i<7;i++){
+    var color=i===0?'#e85b7a':i===6?'#5b8dee':'#7a82a0';
+    html+='<div class="cal-head" style="color:'+color+';font-weight:700;">'+HEADS[i]+'</div>';
+  }
+  for(var i=0;i<firstDow;i++) html+='<div class="cal-day empty"></div>';
+  var todayStr=CURRENT_YEAR+'-'+CURRENT_MONTH+'-'+NOW.getDate();
+  var eventMap={};
+  var evs=DB.events||[];
+  for(var ei=0;ei<evs.length;ei++){
+    var ev=evs[ei];
+    if(!ev.start||!ev.end)continue;
+    var s=new Date(ev.start),e=new Date(ev.end);
+    var cur=new Date(s);
+    while(cur<=e){
+      if(cur.getFullYear()===calYear&&cur.getMonth()+1===calMonth){
+        var dd=cur.getDate();
+        if(!eventMap[dd])eventMap[dd]=[];
+        eventMap[dd].push(ev);
+      }
+      cur.setDate(cur.getDate()+1);
+    }
+  }
+  for(var d=1;d<=days;d++){
+    var key=dKey(calYear,calMonth,d);
+    var rec=DB.daily[key];
+    var hasData=!!(rec&&rec.sales>0);
+    var isToday=key===todayStr;
+    var isSel=selectedDate&&selectedDate.y===calYear&&selectedDate.m===calMonth&&selectedDate.d===d;
+    var hasEvent=(eventMap[d]||[]).length>0;
+    var dow=new Date(calYear,calMonth-1,d).getDay();
+    var holiday=getHoliday(calYear,calMonth,d);
+    var cls='cal-day'+(hasData?' has-data':'')+(hasEvent?' has-event':'')+(isToday?' today':'')+(isSel?' selected':'');
+    var textColor='';
+    if(!isSel){
+      if(holiday) textColor='color:#ff9f4a;';
+      else if(dow===0) textColor='color:#e85b7a;';
+      else if(dow===6) textColor='color:#5b8dee;';
+    }
+    var hName=holiday?'<span style="position:absolute;bottom:1px;font-size:6px;width:100%;text-align:center;overflow:hidden;white-space:nowrap;">'+holiday+'</span>':'';
+    var evDot=hasEvent?'<span style="position:absolute;bottom:'+(holiday?'8px':'2px')+';font-size:7px;">🎪</span>':'';
+    html+='<div class="'+cls+'" style="'+textColor+'" onclick="selectDay('+calYear+','+calMonth+','+d+')">'+d+hName+evDot+'</div>';
+  }
+  var grid=document.getElementById('calGrid');
+  if(grid)grid.innerHTML=html;
+}
+function selectDay(y,m,d){
+  selectedDate={y:y,m:m,d:d};
+  var lbl=document.getElementById('selectedDateLabel');
+  if(lbl)lbl.textContent=y+'年'+m+'月'+d+'日';
+  var fc=document.getElementById('dailyFormCard');
+  if(fc)fc.classList.add('active');
+  var r=DB.daily[dKey(y,m,d)]||{};
+  var fieldMap={Sales:'sales',Visitors:'visitors',NewCust:'newCust',Repeat:'repeat',Issiki:'issiki',Sunglass:'sunglass',Lens:'lens',Repair:'repair',Frame:'frame',Qty:'qty'};
+  var fkeys=Object.keys(fieldMap);
+  for(var i=0;i<fkeys.length;i++){
+    var el=document.getElementById('d'+fkeys[i]);
+    if(el)el.value=r[fieldMap[fkeys[i]]]||'';
+  }
+  // ブランド入力欄を表示
+  buildDailyBrandRows(y,m,d);
+  var evInfo=document.getElementById('dailyEventInfo');
+  var evs=DB.events||[];
+  var dayEvs=evs.filter(function(ev){
+    if(!ev.start||!ev.end)return false;
+    var ds=new Date(y,m-1,d);
+    var es=new Date(ev.start);var ee=new Date(ev.end);
+    return ds>=es&&ds<=ee;
+  });
+  if(evInfo){
+    if(dayEvs.length>0){
+      var names=dayEvs.map(function(e){return e.name;}).join('、');
+      evInfo.innerHTML='🎪 <strong>'+names+'</strong> 開催中';
+      evInfo.style.display='block';
+    }else evInfo.style.display='none';
+  }
+  renderCalendar();
+  renderShiftStaff(y,m,d);
+}
+
+// ===== シフトアプリ連携：出勤スタッフ =====
+function getShiftStaff(y,m,d){
+  try{
+    var raw=localStorage.getItem('obj_shift_v1');
+    if(!raw)return null;
+    var data=JSON.parse(raw);
+    var shiftKey=y+'-'+(m-1); // シフトアプリは月を0始まりで管理
+    var dayKey=y+'-'+m+'-'+d;
+    var dayData=(data.shifts||{})[shiftKey];
+    if(!dayData)return null;
+    var dayRecord=dayData[dayKey];
+    if(!dayRecord)return null;
+    var presentIds=dayRecord.present||[];
+    var leaveData=data.leaveData||{};
+    var outgoingData=data.outgoingData||{};
+    var result=[];
+    (data.STAFF||[]).forEach(function(s){
+      if(presentIds.indexOf(s.id)===-1)return;
+      var lt=(leaveData[s.id]||{})[dayKey];
+      var dest=(outgoingData[s.id]||{})[dayKey];
+      result.push({name:s.name,color:s.color,bg:s.bg,pres:s.pres,leave:lt||null,dest:dest||null});
+    });
+    return result;
+  }catch(e){return null;}
+}
+
+function renderShiftStaff(y,m,d){
+  var el=document.getElementById('shiftStaffInfo');
+  if(!el)return;
+  var staff=getShiftStaff(y,m,d);
+  if(!staff){
+    el.innerHTML='<div style="font-size:10px;color:var(--muted);letter-spacing:1px">'+
+      '👤 出勤スタッフ — <span style="font-size:10px;color:#444;letter-spacing:0">シフトアプリを同じドメインに配置すると表示されます</span></div>';
+    el.style.display='block';
+    return;
+  }
+  var DEST={osaka:'→大阪',east:'→東',tokyo:'→東京',overseas:'→海外'};
+  if(staff.length===0){
+    el.innerHTML='<div style="font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:1px">👤 出勤スタッフ（0名）</div>'+
+      '<span style="color:#555;font-size:11px">この日のシフトデータがありません</span>';
+    el.style.display='block';return;
+  }
+  var chips=staff.map(function(s){
+    var extra=s.leave==='paid'?' 有':s.leave==='summer'?' 夏':s.dest?(DEST[s.dest]||'→他店'):s.pres?' 社':'';
+    return '<span style="display:inline-flex;align-items:center;gap:2px;background:'+s.bg+';color:'+s.color+
+      ';border-radius:5px;padding:3px 9px;font-size:12px;font-weight:600;margin:2px;white-space:nowrap">'+
+      s.name+(extra?'<span style="font-size:9px;opacity:.8">'+extra+'</span>':'')+
+    '</span>';
+  }).join('');
+  el.innerHTML='<div style="font-size:10px;letter-spacing:1px;color:var(--muted);margin-bottom:7px">👤 出勤スタッフ（'+staff.length+'名）</div>'+
+    '<div style="display:flex;flex-wrap:wrap">'+chips+'</div>';
+  el.style.display='block';
+}
+
+function buildDailyBrandRows(y,m,d){
+  var saved=(DB.daily[dKey(y,m,d)]||{}).brands||{};
+  var html='';
+  for(var bi=0;bi<BRANDS.length;bi++){
+    var v=saved[BRANDS[bi]]||0;
+    html+='<div class="brand-row"><label>'+BRANDS[bi]+'</label>';
+    html+='<input type="number" id="db_'+bi+'" min="0" value="'+(v||'')+'" placeholder="0" oninput="updateDailyBrandTotal()"></div>';
+  }
+  var rows=document.getElementById('dailyBrandRows');
+  if(rows)rows.innerHTML=html;
+  updateDailyBrandTotal();
+}
+function updateDailyBrandTotal(){
+  var t=0;
+  for(var bi=0;bi<BRANDS.length;bi++){
+    var el=document.getElementById('db_'+bi);
+    if(el)t+=parseInt(el.value)||0;
+  }
+  var tot=document.getElementById('dailyBrandTotal');
+  if(tot)tot.textContent=t;
+}
+function getDailyBrands(){
+  var brands={};
+  for(var bi=0;bi<BRANDS.length;bi++){
+    var el=document.getElementById('db_'+bi);
+    var v=el?parseInt(el.value)||0:0;
+    if(v>0)brands[BRANDS[bi]]=v;
+  }
+  return brands;
+}
+function syncDailyBrandsToWeekly(y,m,d){
+  // その日が属する週を特定
+  var date=new Date(y,m-1,d);
+  var w=getISOWeek(date);
+  var wy=y;
+  // 年またぎ対応
+  if(m===12&&w===1)wy=y+1;
+  if(m===1&&w>=52)wy=y-1;
+  var key=wKey(wy,w);
+  if(!DB.weekly[key])DB.weekly[key]={weekStart:'',brands:{}};
+  // weekStartを設定
+  var ws=getWeekStart(wy,w);
+  DB.weekly[key].weekStart=ws.getFullYear()+'-'+(ws.getMonth()+1)+'-'+ws.getDate();
+  // その週の全日のブランドを再集計
+  var weekBrands={};
+  for(var bi=0;bi<BRANDS.length;bi++)weekBrands[BRANDS[bi]]=0;
+  for(var dd=0;dd<7;dd++){
+    var cur=new Date(ws);cur.setDate(cur.getDate()+dd);
+    var cy=cur.getFullYear(),cm=cur.getMonth()+1,cd=cur.getDate();
+    var rec=DB.daily[dKey(cy,cm,cd)];
+    if(!rec||!rec.brands)continue;
+    for(var bi=0;bi<BRANDS.length;bi++) weekBrands[BRANDS[bi]]+=(rec.brands[BRANDS[bi]]||0);
+  }
+  // 0を除いて保存
+  var finalBrands={};
+  for(var bi=0;bi<BRANDS.length;bi++) if(weekBrands[BRANDS[bi]]>0) finalBrands[BRANDS[bi]]=weekBrands[BRANDS[bi]];
+  DB.weekly[key].brands=finalBrands;
+}
+
+function saveDailyBasic(){
+  if(!selectedDate){showToast('日付を選択してください',true);return;}
+  var y=selectedDate.y,m=selectedDate.m,d=selectedDate.d;
+  var sales=parseFloat(document.getElementById('dSales').value)||0;
+  if(!sales){showToast('売上高は必須です',true);return;}
+  // ブランドデータ取得
+  var brands=getDailyBrands();
+  DB.daily[dKey(y,m,d)]={
+    sales:sales,
+    visitors:parseInt(document.getElementById('dVisitors').value)||0,
+    newCust:parseInt(document.getElementById('dNewCust').value)||0,
+    repeat:parseInt(document.getElementById('dRepeat').value)||0,
+    issiki:parseFloat(document.getElementById('dIssiki').value)||0,
+    sunglass:parseFloat(document.getElementById('dSunglass').value)||0,
+    lens:parseFloat(document.getElementById('dLens').value)||0,
+    repair:parseFloat(document.getElementById('dRepair').value)||0,
+    frame:parseFloat(document.getElementById('dFrame').value)||0,
+    qty:parseInt(document.getElementById('dQty').value)||0,
+    brands:brands
+  };
+  // 週次に自動反映
+  if(Object.keys(brands).length>0) syncDailyBrandsToWeekly(y,m,d);
+  saveDB(DB);buildYearTabs();updateDashboard();renderCalendar();
+  showToast(y+'年'+m+'月'+d+'日を保存しました ✓');
+}
+function deleteDailyBasic(){
+  if(!selectedDate)return;
+  var y=selectedDate.y,m=selectedDate.m,d=selectedDate.d;
+  
+  delete DB.daily[dKey(y,m,d)];
+  saveDB(DB);buildYearTabs();updateDashboard();renderCalendar();
+  showToast('削除しました ✓');
+}
+
+// ══ 週次ブランド ══
+function getISOWeek(date){
+  var d=new Date(Date.UTC(date.getFullYear(),date.getMonth(),date.getDate()));
+  var day=d.getUTCDay()||7;
+  d.setUTCDate(d.getUTCDate()+4-day);
+  var yearStart=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.ceil((((d-yearStart)/86400000)+1)/7);
+}
+function getWeekStart(y,w){
+  var d=new Date(y,0,1);
+  var dow=d.getDay();
+  var diff=(1-dow+7)%7;
+  d.setDate(d.getDate()+diff+(w-1)*7);
+  return d;
+}
+
+
+
+
+
+
+// ══ 月次入力 ══
+function initMonthlyPage(){
+  initGoalForm();
+  var ySel=document.getElementById('inYear');
+  if(!ySel)return;
+  var years=getYearsWithData();
+  var html='';
+  for(var i=0;i<years.length;i++) html+='<option value="'+years[i]+'">'+years[i]+'年</option>';
+  ySel.innerHTML=html;
+  ySel.value=CURRENT_YEAR;
+  document.getElementById('inMonth').value=CURRENT_MONTH;
+  ySel.onchange=loadMonthlyForm;
+  document.getElementById('inMonth').onchange=loadMonthlyForm;
+  loadMonthlyForm();
+  buildBrandInputRows();
+}
+function loadMonthlyForm(){
+  var y=parseInt(document.getElementById('inYear').value);
+  var m=parseInt(document.getElementById('inMonth').value);
+  var r=aggregateMonth(y,m);
+  var summary=document.getElementById('autoSummary');
+  if(summary){
+    summary.innerHTML='自動集計: 売上 <strong>¥'+r.sales.toLocaleString()+'</strong>　来客 <strong>'+r.visitors+'名</strong>　本数 <strong>'+r.qty+'本</strong>';
+  }
+  var manual=DB.monthly[mKey(y,m)]||{};
+  var is=document.getElementById('inSales');if(is)is.value=manual.sales||'';
+  var io=document.getElementById('inOnline');if(io)io.value=manual.online||'';
+  updateTotalSales();
+  buildBrandInputRows();
+  loadGoalForm();
+}
+function updateTotalSales(){
+  var y=parseInt(document.getElementById('inYear').value);
+  var m=parseInt(document.getElementById('inMonth').value);
+  var r=aggregateMonth(y,m);
+  var isv=document.getElementById('inSales');
+  var iov=document.getElementById('inOnline');
+  var baseSales=isv&&isv.value?parseFloat(isv.value):r.sales;
+  var online=iov?parseFloat(iov.value)||0:0;
+  var total=baseSales+online;
+  var td=document.getElementById('totalSalesDisplay');
+  if(td)td.textContent='¥'+Math.round(total).toLocaleString();
+}
+function saveMonthly(){
+  var y=parseInt(document.getElementById('inYear').value);
+  var m=parseInt(document.getElementById('inMonth').value);
+  if(!DB.monthly)DB.monthly={};
+  if(!DB.monthly[mKey(y,m)])DB.monthly[mKey(y,m)]={};
+  var is=document.getElementById('inSales');
+  var io=document.getElementById('inOnline');
+  if(is&&is.value)DB.monthly[mKey(y,m)].sales=parseFloat(is.value);
+  if(io&&io.value)DB.monthly[mKey(y,m)].online=parseFloat(io.value);
+  saveDB(DB);buildYearTabs();updateDashboard();
+  showToast(y+'年'+m+'月を保存しました ✓');
+}
+function deleteMonthly(){
+  var y=parseInt(document.getElementById('inYear').value);
+  var m=parseInt(document.getElementById('inMonth').value);
+  
+  if(DB.monthly[mKey(y,m)]){delete DB.monthly[mKey(y,m)];}
+  saveDB(DB);loadMonthlyForm();updateDashboard();
+  showToast('削除しました ✓');
+}
+function buildBrandInputRows(){
+  var y=parseInt(document.getElementById('inYear').value)||CURRENT_YEAR;
+  var m=parseInt(document.getElementById('inMonth').value)||CURRENT_MONTH;
+  var bd=aggregateBrandsForMonth(y,m);
+  var manual=DB.monthly[mKey(y,m)]||{};
+  var savedBrands=manual.brands||{};
+  var autoBrands=bd;
+  var as=document.getElementById('autoBrandSummary');
+  if(as){
+    var total=0;var bkeys=Object.keys(autoBrands);
+    for(var i=0;i<bkeys.length;i++) total+=(autoBrands[bkeys[i]]||0);
+    as.innerHTML='週次データから自動集計: <strong>合計'+total+'本</strong>';
+  }
+  var html='';
+  for(var bi=0;bi<BRANDS.length;bi++){
+    var auto=autoBrands[BRANDS[bi]]||0;
+    var val=savedBrands[BRANDS[bi]]!==undefined?savedBrands[BRANDS[bi]]:auto;
+    html+='<div class="brand-row"><label>'+BRANDS[bi]+(auto?'<span style="color:var(--muted);font-size:10px;"> (自動:'+auto+')</span>':'')+'</label>';
+    html+='<input type="number" id="mb_'+bi+'" min="0" value="'+val+'" oninput="updateMBrandTotal()"></div>';
+  }
+  var rows=document.getElementById('brandInputRows');
+  if(rows)rows.innerHTML=html;
+  updateMBrandTotal();
+}
+function updateMBrandTotal(){
+  var t=0;
+  for(var bi=0;bi<BRANDS.length;bi++){
+    var el=document.getElementById('mb_'+bi);
+    if(el)t+=parseInt(el.value)||0;
+  }
+  var tot=document.getElementById('brandTotal');
+  if(tot)tot.textContent=t;
+}
+function saveMonthlyBrands(){
+  var y=parseInt(document.getElementById('inYear').value);
+  var m=parseInt(document.getElementById('inMonth').value);
+  if(!DB.monthly)DB.monthly={};
+  if(!DB.monthly[mKey(y,m)])DB.monthly[mKey(y,m)]={};
+  var brands={};
+  for(var bi=0;bi<BRANDS.length;bi++){
+    var el=document.getElementById('mb_'+bi);
+    var v=el?parseInt(el.value)||0:0;
+    if(v>0)brands[BRANDS[bi]]=v;
+  }
+  DB.monthly[mKey(y,m)].brands=brands;
+  saveDB(DB);showToast(y+'年'+m+'月のブランドデータを保存しました ✓');
+}
+function rebuildMonthly(){updateDashboard();showToast('再集計しました ✓');}
+
+// ══ 目標管理 ══
+function goalKey(y,m){return 'goal_'+y+'_'+m;}
+function loadGoalData(y,m){try{var r=localStorage.getItem(goalKey(y,m));if(r)return JSON.parse(r);}catch(e){}return null;}
+function saveGoalData(y,m,data){try{localStorage.setItem(goalKey(y,m),JSON.stringify(data));}catch(e){}}
+function initGoalForm(){
+  var ySel=document.getElementById('goalYear');
+  if(!ySel)return;
+  var years=getYearsWithData();
+  var html='';
+  for(var i=0;i<years.length;i++) html+='<option value="'+years[i]+'">'+years[i]+'年</option>';
+  ySel.innerHTML=html;
+  ySel.value=CURRENT_YEAR;
+  document.getElementById('goalMonth').value=CURRENT_MONTH;
+  ySel.onchange=loadGoalForm;
+  document.getElementById('goalMonth').onchange=loadGoalForm;
+  loadGoalForm();
+}
+function loadGoalForm(){
+  var y=parseInt(document.getElementById('goalYear').value);
+  var m=parseInt(document.getElementById('goalMonth').value);
+  var g=loadGoalData(y,m);
+  var gs=document.getElementById('goalSales');if(gs)gs.value=g?g.sales:'';
+  var gq=document.getElementById('goalQty');if(gq)gq.value=g?g.qty:'';
+  updateGoalProgress(y,m,g);
+}
+function updateGoalProgress(y,m,g){
+  var panel=document.getElementById('goalProgress');
+  var content=document.getElementById('goalProgressContent');
+  if(!g||(!g.sales&&!g.qty)){if(panel)panel.style.display='none';return;}
+  var r=aggregateMonth(y,m);
+  if(panel)panel.style.display='block';
+  var html='';
+  if(g.sales){
+    var pct=Math.min(Math.round((r.totalSales/g.sales)*100),100);
+    var remain=Math.max(g.sales-r.totalSales,0);
+    var color=pct>=100?'var(--accent3)':pct>=70?'var(--accent2)':'var(--accent)';
+    html+='<div style="margin-bottom:10px;">';
+    html+='<div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="font-size:12px;font-weight:700;">売上達成率</span><span style="font-size:14px;font-weight:900;color:'+color+';">'+pct+'%</span></div>';
+    html+='<div style="background:var(--border);border-radius:4px;height:10px;overflow:hidden;"><div style="width:'+pct+'%;background:'+color+';height:100%;border-radius:4px;"></div></div>';
+    html+='<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--muted);">';
+    html+='<span>¥'+r.totalSales.toLocaleString()+' / ¥'+g.sales.toLocaleString()+'</span><span>残り¥'+remain.toLocaleString()+'</span></div></div>';
+  }
+  if(g.qty){
+    var qpct=Math.min(Math.round((r.qty/g.qty)*100),100);
+    html+='<div style="display:flex;justify-content:space-between;"><span style="font-size:12px;">販売本数</span>';
+    html+='<span style="font-size:13px;font-weight:700;color:var(--accent3);">'+r.qty+'本 / '+g.qty+'本('+qpct+'%)</span></div>';
+  }
+  if(content)content.innerHTML=html;
+}
+function saveGoal(){
+  var y=parseInt(document.getElementById('goalYear').value);
+  var m=parseInt(document.getElementById('goalMonth').value);
+  var s=parseInt(document.getElementById('goalSales').value)||0;
+  var q=parseInt(document.getElementById('goalQty').value)||0;
+  if(!s&&!q){showToast('目標値を入力してください',true);return;}
+  var g={sales:s,qty:q};
+  saveGoalData(y,m,g);
+  updateGoalProgress(y,m,g);
+  updateDashGoal();
+  showToast(y+'年'+m+'月の目標を設定しました ✓');
+}
+function updateDashGoal(){
+  var card=document.getElementById('dashGoalCard');
+  var content=document.getElementById('dashGoalContent');
+  if(!card||!content)return;
+  var g=loadGoalData(CURRENT_YEAR,CURRENT_MONTH);
+  if(!g||(!g.sales&&!g.qty)){card.style.display='none';return;}
+  var r=aggregateMonth(CURRENT_YEAR,CURRENT_MONTH);
+  var MONTHS=['','1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  card.style.display='block';
+  var html='<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">'+CURRENT_YEAR+'年'+MONTHS[CURRENT_MONTH]+'の目標</div>';
+  if(g.sales){
+    var pct=Math.min(Math.round((r.totalSales/g.sales)*100),100);
+    var remain=Math.max(g.sales-r.totalSales,0);
+    var color=pct>=100?'var(--accent3)':pct>=70?'var(--accent2)':'var(--accent)';
+    var emoji=pct>=100?'🎉':pct>=70?'💪':'🔥';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">';
+    html+='<span style="font-size:12px;">'+emoji+' 売上達成率</span>';
+    html+='<span style="font-size:18px;font-weight:900;color:'+color+';">'+pct+'%</span></div>';
+    html+='<div style="background:var(--border);border-radius:6px;height:12px;overflow:hidden;">';
+    html+='<div style="width:'+pct+'%;background:'+color+';height:100%;border-radius:6px;"></div></div>';
+    html+='<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted);">';
+    html+='<span>¥'+r.totalSales.toLocaleString()+'</span><span>残り¥'+remain.toLocaleString()+'</span></div>';
+  }
+  if(g.qty){
+    var qpct=Math.min(Math.round((r.qty/g.qty)*100),100);
+    html+='<div style="display:flex;justify-content:space-between;margin-top:8px;">';
+    html+='<span style="font-size:12px;color:var(--muted);">販売本数</span>';
+    html+='<span style="font-size:13px;font-weight:700;color:var(--accent3);">'+r.qty+'本/'+g.qty+'本('+qpct+'%)</span></div>';
+  }
+  content.innerHTML=html;
+}
+
+// ══ 月次レポート ══
+function generateMonthlyReport(){
+  var y=parseInt(document.getElementById('inYear').value);
+  var m=parseInt(document.getElementById('inMonth').value);
+  var r=aggregateMonth(y,m);
+  if(!r.totalSales&&!r.visitors){showToast(y+'年'+m+'月のデータがありません',true);return;}
+  var rp=aggregateMonth(m>1?y:y-1,m>1?m-1:12);
+  var rly=aggregateMonth(y-1,m);
+  var bd=aggregateBrandsForMonth(y,m);
+  var pairs=[];
+  var bkeys=Object.keys(bd);
+  for(var i=0;i<bkeys.length;i++) if(bd[bkeys[i]]>0) pairs.push([bkeys[i],bd[bkeys[i]]]);
+  pairs.sort(function(a,b){return b[1]-a[1];});
+  var top5=pairs.slice(0,5);
+  var totalBrands=0;for(var i=0;i<pairs.length;i++) totalBrands+=pairs[i][1];
+  var totalV=r.visitors||0;
+  var newPct=totalV?Math.round((r.newCust/totalV)*100):0;
+  var repPct=totalV?Math.round((r.repeat/totalV)*100):0;
+  function diff(cur,prev){if(!prev)return '';var d=((cur-prev)/prev*100).toFixed(1);return parseFloat(d)>=0?'<span style="color:var(--accent3);">▲'+d+'%</span>':'<span style="color:var(--danger);">▼'+Math.abs(d)+'%</span>';}
+  var MONTHS=['','1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  var html='<div style="background:rgba(232,201,109,.1);border:1px solid rgba(232,201,109,.3);border-radius:10px;padding:14px;margin-bottom:14px;text-align:center;">';
+  html+='<div style="font-size:18px;font-weight:900;color:var(--accent2);">'+y+'年'+MONTHS[m]+' 月次レポート</div></div>';
+  html+='<div style="font-size:11px;color:var(--accent);letter-spacing:1px;margin-bottom:8px;font-weight:700;">■ 月次サマリー</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">';
+  html+='<div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-size:10px;color:var(--muted);">総売上</div><div style="font-size:16px;font-weight:900;">¥'+r.totalSales.toLocaleString()+'</div></div>';
+  html+='<div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-size:10px;color:var(--muted);">来客数</div><div style="font-size:16px;font-weight:900;">'+totalV+'名</div></div>';
+  html+='<div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-size:10px;color:var(--muted);">販売本数</div><div style="font-size:16px;font-weight:900;">'+r.qty+'本</div></div>';
+  html+='<div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-size:10px;color:var(--muted);">客単価</div><div style="font-size:16px;font-weight:900;">'+(r.qty?'¥'+Math.round(r.totalSales/r.qty).toLocaleString():'—')+'</div></div>';
+  html+='</div>';
+  if(rp.totalSales||rly.totalSales){
+    html+='<div style="font-size:11px;color:var(--accent);letter-spacing:1px;margin-bottom:8px;font-weight:700;">■ 比較</div>';
+    html+='<div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:14px;">';
+    if(rp.totalSales) html+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);"><span style="font-size:12px;">前月比(売上)</span>'+diff(r.totalSales,rp.totalSales)+'</div>';
+    if(rly.totalSales) html+='<div style="display:flex;justify-content:space-between;padding:5px 0;"><span style="font-size:12px;">前年同月比(売上)</span>'+diff(r.totalSales,rly.totalSales)+'</div>';
+    html+='</div>';
+  }
+  if(top5.length){
+    html+='<div style="font-size:11px;color:var(--accent);letter-spacing:1px;margin-bottom:8px;font-weight:700;">■ ブランド TOP5</div>';
+    html+='<div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:14px;">';
+    var colors=['var(--accent2)','var(--accent)','var(--accent3)','var(--orange)','var(--purple)'];
+    for(var i=0;i<top5.length;i++){
+      var pct=totalBrands?Math.round((top5[i][1]/totalBrands)*100):0;
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);">';
+      html+='<span style="font-size:13px;font-weight:900;color:'+colors[i]+';width:20px;">'+(i+1)+'</span>';
+      html+='<span style="flex:1;font-size:12px;">'+top5[i][0]+'</span>';
+      html+='<span style="font-size:13px;font-weight:700;">'+top5[i][1]+'本</span>';
+      html+='<span style="font-size:10px;color:var(--muted);width:36px;text-align:right;">'+pct+'%</span></div>';
+    }
+    html+='</div>';
+  }
+  html+='<div style="font-size:11px;color:var(--accent);letter-spacing:1px;margin-bottom:8px;font-weight:700;">■ 新規・リピート比率</div>';
+  html+='<div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:14px;">';
+  html+='<div style="display:flex;justify-content:space-around;margin-bottom:10px;">';
+  html+='<div style="text-align:center;"><div style="font-size:10px;color:var(--muted);">新規</div><div style="font-size:22px;font-weight:900;color:var(--accent2);">'+r.newCust+'名</div><div style="font-size:11px;color:var(--muted);">'+newPct+'%</div></div>';
+  html+='<div style="text-align:center;"><div style="font-size:10px;color:var(--muted);">リピート</div><div style="font-size:22px;font-weight:900;color:var(--accent3);">'+r.repeat+'名</div><div style="font-size:11px;color:var(--muted);">'+repPct+'%</div></div>';
+  html+='<div style="text-align:center;"><div style="font-size:10px;color:var(--muted);">合計</div><div style="font-size:22px;font-weight:900;">'+totalV+'名</div></div></div>';
+  html+='<div style="height:8px;border-radius:4px;overflow:hidden;display:flex;">';
+  html+='<div style="width:'+newPct+'%;background:var(--accent2);"></div>';
+  html+='<div style="width:'+repPct+'%;background:var(--accent3);"></div></div></div>';
+  var title=document.getElementById('reportTitle');if(title)title.textContent=y+'年'+MONTHS[m]+' 月次レポート';
+  var content=document.getElementById('reportContent');if(content)content.innerHTML=html;
+  document.getElementById('reportModal').classList.add('open');
+}
+function copyReport(){
+  var y=parseInt(document.getElementById('inYear').value);
+  var m=parseInt(document.getElementById('inMonth').value);
+  var r=aggregateMonth(y,m);
+  var MONTHS=['','1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  var text='【'+y+'年'+MONTHS[m]+' 月次レポート】\n\n';
+  text+='総売上: ¥'+r.totalSales.toLocaleString()+'\n';
+  text+='来客数: '+r.visitors+'名\n';
+  text+='販売本数: '+r.qty+'本\n';
+  navigator.clipboard.writeText(text).then(function(){showToast('コピーしました ✓');}).catch(function(){showToast('コピー失敗',true);});
+}
+function closeReportModal(){document.getElementById('reportModal').classList.remove('open');}
+
+// ══ OCR ══
+function readDailyPhoto(event){
+  var file=event.target.files[0];
+  if(!file)return;
+  var status=document.getElementById('ocrStatus');
+  if(status){status.textContent='📖 読み取り中...';status.style.color='var(--accent3)';}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var base64=e.target.result.split(',')[1];
+    var isPDF=file.type==='application/pdf';
+    var mediaType=isPDF?'application/pdf':(file.type||'image/jpeg');
+    var blocks=[];
+    if(isPDF) blocks.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}});
+    else blocks.push({type:'image',source:{type:'base64',media_type:mediaType,data:base64}});
+    blocks.push({type:'text',text:'この眼鏡店の手書き日報画像から数値を読み取り、JSONのみで返してください。\n\n【日報の構造】\n- 右下の集計欄に「セット」「入替」「片替」「枠替」「SG」「他」の本数と金額がある\n- 「① 総売上」が合計売上（ページ右側の合計金額）\n- 新/旧の列で新規・リピート客数がわかる\n- セット売上=一式売上、SG=サングラス、入替/片替=レンズ入替、枠替=フレーム交換\n\n【読み取り項目】\n{"sales":総売上高(円・整数),"visitors":来客数合計(新+旧),"newCust":新規顧客数,"repeat":リピート客数,"issiki":セット売上金額,"sunglass":SG売上金額,"lens":入替+片替の売上金額合計,"repair":修理・残金等の金額,"frame":枠替の売上金額,"qty":セット販売本数(整数)}\n\n読み取れない・記載なしの項目は0。金額はカンマや小数点を除いた整数で返してください。'});
+    fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:blocks}]})})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var text=(data.content||[]).map(function(c){return c.text||'';}).join('');
+      var jm=text.match(/\{[\s\S]*\}/);
+      if(!jm)throw new Error('JSON not found');
+      var parsed=JSON.parse(jm[0]);
+      var fields={dSales:'sales',dVisitors:'visitors',dNewCust:'newCust',dRepeat:'repeat',dIssiki:'issiki',dSunglass:'sunglass',dLens:'lens',dRepair:'repair',dFrame:'frame',dQty:'qty'};
+      var fkeys=Object.keys(fields);
+      for(var i=0;i<fkeys.length;i++){
+        var el=document.getElementById(fkeys[i]);
+        if(el&&parsed[fields[fkeys[i]]]!=null)el.value=parsed[fields[fkeys[i]]]||'';
+      }
+      if(status){status.textContent='✓ 読み取り完了！確認して保存してください';status.style.color='var(--accent3)';}
+    })
+    .catch(function(){if(status){status.textContent='読み取り失敗。手動で入力してください。';status.style.color='var(--danger)';}});
+    document.getElementById('ocrFileInput').value='';
+  };
+  reader.readAsDataURL(file);
+}
+
+function readBulkPhotos(event){
+  var files=Array.prototype.slice.call(event.target.files);
+  if(!files.length)return;
+  bulkOcrDataList=[];
+  document.getElementById('bulkOcrModal').classList.add('open');
+  document.getElementById('bulkOcrResults').innerHTML='';
+  document.getElementById('bulkSaveBtn').style.display='none';
+  var prog=document.getElementById('bulkOcrProgress');
+  if(prog)prog.textContent='0 / '+files.length+' 読み取り中...';
+  var completed=0;
+  function processFile(file,idx){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var base64=e.target.result.split(',')[1];
+      var isPDF=file.type==='application/pdf';
+      var mediaType=isPDF?'application/pdf':(file.type||'image/jpeg');
+      var blocks=[];
+      if(isPDF) blocks.push({type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}});
+      else blocks.push({type:'image',source:{type:'base64',media_type:mediaType,data:base64}});
+      blocks.push({type:'text',text:'この眼鏡店の手書き日報画像から数値を読み取り、JSONのみで返してください。\n\n【日報の構造】\n- ヘッダーに年月日（R7=2025,R6=2024,R5=2023,R4=2022）\n- 右下の集計欄に「セット」「入替」「片替」「枠替」「SG」「他」の本数と金額\n- 「① 総売上」が合計売上\n- 新/旧の列で新規・リピート客数がわかる\n- セット売上=一式売上、SG=サングラス、入替+片替=レンズ入替、枠替=フレーム交換\n\n【読み取り項目】\n{"date":"YYYY-MM-DD形式の日付","sales":総売上高(円・整数),"visitors":来客数合計,"newCust":新規顧客数,"repeat":リピート客数,"issiki":セット売上金額,"sunglass":SG売上金額,"lens":入替+片替の売上金額合計,"repair":修理・残金等の金額,"frame":枠替の売上金額,"qty":セット販売本数(整数)}\n\n読み取れない・記載なしの項目は0。金額はカンマや小数点を除いた整数で返してください。'});
+      fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':getApiKey()},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:blocks}]})})
+      .then(function(r){return r.json();})
+      .then(function(data){
+        var text=(data.content||[]).map(function(c){return c.text||'';}).join('');
+        var jm=text.match(/\{[\s\S]*\}/);
+        if(!jm)throw new Error('JSON not found');
+        var parsed=JSON.parse(jm[0]);
+        parsed._fileName=file.name;parsed._idx=idx;
+        bulkOcrDataList.push(parsed);
+      })
+      .catch(function(){bulkOcrDataList.push({_fileName:file.name,_idx:idx,_error:true,date:'',sales:0,visitors:0,newCust:0,repeat:0,issiki:0,sunglass:0,lens:0,repair:0,frame:0,qty:0});})
+      .finally(function(){
+        completed++;
+        if(prog)prog.textContent=completed+' / '+files.length+' 読み取り中...';
+        if(completed===files.length){
+          bulkOcrDataList.sort(function(a,b){return a._idx-b._idx;});
+          renderBulkOcrResults();
+        }
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+  for(var i=0;i<files.length;i++) processFile(files[i],i);
+  document.getElementById('bulkOcrInput').value='';
+}
+function renderBulkOcrResults(){
+  var prog=document.getElementById('bulkOcrProgress');
+  if(prog)prog.textContent='読み取り完了！日付と数値を確認してください';
+  var html='';
+  for(var i=0;i<bulkOcrDataList.length;i++){
+    var d=bulkOcrDataList[i];
+    html+='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;">';
+    html+='<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">📄 '+d._fileName+'</div>';
+    if(d._error){html+='<div style="color:var(--danger);font-size:12px;">読み取り失敗</div>';}
+    else{
+      html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+      html+='<div><div style="font-size:10px;color:var(--muted);">日付</div><input type="text" id="bd_date_'+i+'" value="'+(d.date||'')+'" placeholder="2025-12-25" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-size:13px;"></div>';
+      html+='<div><div style="font-size:10px;color:var(--muted);">総売上(円)</div><input type="number" id="bd_sales_'+i+'" value="'+(d.sales||0)+'" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-size:13px;"></div>';
+      html+='<div><div style="font-size:10px;color:var(--muted);">来客数</div><input type="number" id="bd_visitors_'+i+'" value="'+(d.visitors||0)+'" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-size:13px;"></div>';
+      html+='<div><div style="font-size:10px;color:var(--muted);">新規/リピート</div><div style="display:flex;gap:4px;"><input type="number" id="bd_new_'+i+'" value="'+(d.newCust||0)+'" style="width:50%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-size:13px;"><input type="number" id="bd_rep_'+i+'" value="'+(d.repeat||0)+'" style="width:50%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-size:13px;"></div></div>';
+      html+='<div><div style="font-size:10px;color:var(--muted);">一式売上</div><input type="number" id="bd_issiki_'+i+'" value="'+(d.issiki||0)+'" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-size:13px;"></div>';
+      html+='<div><div style="font-size:10px;color:var(--muted);">本数</div><input type="number" id="bd_qty_'+i+'" value="'+(d.qty||0)+'" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-size:13px;"></div>';
+      html+='</div>';
+    }
+    html+='</div>';
+  }
+  document.getElementById('bulkOcrResults').innerHTML=html;
+  var btn=document.getElementById('bulkSaveBtn');if(btn)btn.style.display='block';
+}
+function saveBulkOcrData(){
+  var saved=0,skipped=0;
+  for(var i=0;i<bulkOcrDataList.length;i++){
+    var d=bulkOcrDataList[i];
+    if(d._error){skipped++;continue;}
+    var dateStr=document.getElementById('bd_date_'+i).value.trim();
+    if(!dateStr){skipped++;continue;}
+    var parts=dateStr.split('-');
+    if(parts.length!==3){skipped++;continue;}
+    var y=parseInt(parts[0]),m=parseInt(parts[1]),dd=parseInt(parts[2]);
+    if(!y||!m||!dd){skipped++;continue;}
+    DB.daily[y+'-'+m+'-'+dd]={
+      sales:parseInt(document.getElementById('bd_sales_'+i).value)||0,
+      visitors:parseInt(document.getElementById('bd_visitors_'+i).value)||0,
+      newCust:parseInt(document.getElementById('bd_new_'+i).value)||0,
+      repeat:parseInt(document.getElementById('bd_rep_'+i).value)||0,
+      issiki:parseInt(document.getElementById('bd_issiki_'+i).value)||0,
+      sunglass:0,lens:0,repair:0,frame:0,
+      qty:parseInt(document.getElementById('bd_qty_'+i).value)||0
+    };
+    saved++;
+  }
+  saveDB(DB);buildYearTabs();updateDashboard();renderCalendar();
+  closeBulkOcrModal();
+  showToast(saved+'件保存しました'+(skipped?' ('+skipped+'件スキップ)':'')+' ✓');
+}
+function closeBulkOcrModal(){document.getElementById('bulkOcrModal').classList.remove('open');bulkOcrDataList=[];}
+
+// ══ エクスポート ══
+function exportEmbeddedHTML(){
+  var currentHTML=document.documentElement.outerHTML;
+  var marker='var INITIAL_DB=';
+  var start=currentHTML.indexOf(marker);
+  if(start<0){showToast('エクスポート失敗',true);return;}
+  var depth=0,end=-1;
+  for(var i=start+marker.length;i<currentHTML.length;i++){
+    if(currentHTML[i]==='{')depth++;
+    else if(currentHTML[i]==='}'){depth--;if(depth===0){end=i+1;break;}}
+  }
+  if(end<0){showToast('エクスポート失敗',true);return;}
+  var dbJSON=JSON.stringify(DB);
+  var newHTML=currentHTML.slice(0,start)+marker+dbJSON+';'+currentHTML.slice(end+1);
+  showExportModal(newHTML,'OBJ売上分析_'+today()+'.html','HTML');
+}
+function exportCSV(){
+  var years=getYearsWithData();
+  var rows=['年,月,売上,来客数,販売本数,客単価,一式売上,サングラス,レンズ入替,修理等,フレーム交換'];
+  for(var yi=0;yi<years.length;yi++){
+    for(var m=1;m<=12;m++){
+      var r=aggregateMonth(years[yi],m);
+      if(!r.totalSales&&!r.visitors)continue;
+      var avg=r.qty?Math.round(r.totalSales/r.qty):0;
+      rows.push([years[yi],m,r.totalSales,r.visitors,r.qty,avg,r.issiki,r.sunglass,r.lens,r.repair,r.frame].join(','));
+    }
+  }
+  showExportModal(rows.join('\n'),'OBJ売上分析_'+today()+'.csv','CSV');
+}
+function exportJSON(){showExportModal(JSON.stringify(DB,null,2),'OBJ売上分析_'+today()+'.json','JSON');}
+function showExportModal(data,filename,type){
+  var ta=document.getElementById('exportTextarea');
+  if(ta)ta.value=data;
+  var lbl=document.getElementById('exportLabel');
+  if(lbl)lbl.textContent=type+'エクスポート: '+filename;
+  document.getElementById('exportModal').classList.add('open');
+}
+function copyExportData(){
+  var ta=document.getElementById('exportTextarea');
+  if(!ta)return;
+  ta.select();
+  navigator.clipboard.writeText(ta.value).then(function(){showToast('コピーしました ✓');}).catch(function(){showToast('コピー失敗',true);});
+}
+function closeExportModal(){document.getElementById('exportModal').classList.remove('open');}
+function importJSON(event){
+  var file=event.target.files[0];
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=JSON.parse(e.target.result);
+      if(!data.daily)throw new Error('invalid');
+      DB=data;if(!DB.events)DB.events=[];
+      saveDB(DB);buildYearTabs();updateDashboard();
+      showToast('インポートしました ✓');
+    }catch(err){showToast('インポート失敗',true);}
+  };
+  reader.readAsText(file);
+}
+
+// ══ セキュリティ ══
+function simpleHash(str){
+  var hash=5381,h2=0;
+  for(var i=0;i<str.length;i++) hash=((hash<<5)+hash)^str.charCodeAt(i)>>>0;
+  hash=hash>>>0;
+  for(var i=str.length-1;i>=0;i--) h2=((h2<<5)+h2)^str.charCodeAt(i)>>>0;
+  h2=h2>>>0;
+  return hash.toString(16).padStart(8,'0')+h2.toString(16).padStart(8,'0');
+}
+function secLoad(){try{var r=localStorage.getItem(SEC_KEY);if(r)return JSON.parse(r);}catch(e){}return{pin:PIN_HASH_DEFAULT,password:null,autoLockMin:AUTO_LOCK_MIN};}
+function secSave(d){try{localStorage.setItem(SEC_KEY,JSON.stringify(d));}catch(e){}}
+function initSecurity(){
+  showLock();
+  document.addEventListener('touchstart',resetAutoLock,{passive:true});
+  document.addEventListener('click',resetAutoLock,{passive:true});
+}
+function showLock(){
+  isLocked=true;
+  var ls=document.getElementById('lockScreen');if(ls)ls.style.display='flex';
+  pinBuffer='';failCount=0;updatePinDots();
+  var ps=document.getElementById('pinSection');if(ps)ps.style.display='block';
+  var pw=document.getElementById('pwSection');if(pw)pw.style.display='none';
+  var lo=document.getElementById('lockoutMsg');if(lo)lo.style.display='none';
+  var pe=document.getElementById('pinError');if(pe)pe.textContent='';
+}
+function hideLock(){
+  isLocked=false;
+  var ls=document.getElementById('lockScreen');if(ls)ls.style.display='none';
+  startAutoLock();
+  setTimeout(function(){updateDashboard();},100);
+}
+function pinInput(n){if(pinBuffer.length>=4)return;pinBuffer+=n;updatePinDots();if(pinBuffer.length===4)setTimeout(checkPin,150);}
+function pinBackspace(){pinBuffer=pinBuffer.slice(0,-1);updatePinDots();}
+function pinClear(){pinBuffer='';updatePinDots();}
+function updatePinDots(){
+  var dots=document.getElementById('pinDots');if(!dots)return;
+  var ch=dots.children;
+  for(var i=0;i<ch.length;i++) ch[i].className='pin-dot'+(i<pinBuffer.length?' filled':'');
+}
+function checkPin(){
+  var sec=secLoad();
+  if(simpleHash(pinBuffer)===sec.pin) onAuthSuccess();
+  else onAuthFail();
+}
+function switchToPassword(){
+  var ps=document.getElementById('pinSection');if(ps)ps.style.display='none';
+  var pw=document.getElementById('pwSection');if(pw)pw.style.display='block';
+  var inp=document.getElementById('pwInput');if(inp){inp.value='';setTimeout(function(){inp.focus();},100);}
+}
+function switchToPin(){
+  var pw=document.getElementById('pwSection');if(pw)pw.style.display='none';
+  var ps=document.getElementById('pinSection');if(ps)ps.style.display='block';
+  pinBuffer='';updatePinDots();
+}
+function checkPassword(){
+  var sec=secLoad();
+  var inp=document.getElementById('pwInput');if(!inp)return;
+  if(!sec.password){showToast('パスワード未設定',true);return;}
+  if(simpleHash(inp.value)===sec.password) onAuthSuccess();
+  else onAuthFail();
+}
+function onAuthSuccess(){failCount=0;pinBuffer='';hideLock();}
+function onAuthFail(){
+  failCount++;pinBuffer='';
+  var dots=document.getElementById('pinDots');
+  if(dots){var ch=dots.children;for(var i=0;i<ch.length;i++)ch[i].className='pin-dot error';
+    setTimeout(function(){var d=document.getElementById('pinDots');if(d){var c=d.children;for(var j=0;j<c.length;j++)c[j].className='pin-dot';}updatePinDots();},600);}
+  var pe=document.getElementById('pinError');
+  if(pe)pe.textContent='認証失敗('+failCount+'/3回)';
+  if(failCount>=3){
+    var ps=document.getElementById('pinSection');if(ps)ps.style.display='none';
+    var lo=document.getElementById('lockoutMsg');if(lo)lo.style.display='block';
+    var sec=30;var lt=document.getElementById('lockoutTimer');if(lt)lt.textContent=sec+'秒後に再試行できます';
+    lockInterval=setInterval(function(){
+      sec--;var lt2=document.getElementById('lockoutTimer');if(lt2)lt2.textContent=sec+'秒後に再試行できます';
+      if(sec<=0){clearInterval(lockInterval);failCount=0;
+        var lo2=document.getElementById('lockoutMsg');if(lo2)lo2.style.display='none';
+        var ps2=document.getElementById('pinSection');if(ps2)ps2.style.display='block';
+        pinBuffer='';updatePinDots();var pe2=document.getElementById('pinError');if(pe2)pe2.textContent='';}
+    },1000);
+  }
+}
+function startAutoLock(){var sec=secLoad();clearTimeout(autoLockTimer);autoLockTimer=setTimeout(function(){if(!isLocked)showLock();},sec.autoLockMin*60*1000);}
+function resetAutoLock(){if(!isLocked)startAutoLock();}
+function manualLock(){showLock();}
+function openChangePIN(){
+  var cur=prompt('現在のPINを入力(4桁)');if(!cur)return;
+  var sec=secLoad();if(simpleHash(cur)!==sec.pin){showToast('PINが違います',true);return;}
+  var np=prompt('新しいPIN(4桁の数字)');if(!np||np.length!==4||isNaN(np)){showToast('4桁の数字で入力してください',true);return;}
+  var np2=prompt('もう一度新しいPINを入力');if(np!==np2){showToast('PINが一致しません',true);return;}
+  sec.pin=simpleHash(np);secSave(sec);showToast('PINを変更しました ✓');
+}
+function changeAutoLockTime(){
+  var sec=secLoad();var cur=sec.autoLockMin||5;
+  var val=prompt('自動ロックまでの時間(分)\n現在: '+cur+'分');
+  if(!val||isNaN(val)||parseInt(val)<1){showToast('1以上の数値を入力してください',true);return;}
+  sec.autoLockMin=parseInt(val);secSave(sec);startAutoLock();showToast('自動ロックを'+sec.autoLockMin+'分に設定しました ✓');
+}
+
+// ══ ブランドマスター管理 ══
+var DEFAULT_BRANDS=[{"name":"OBJ","cat":"Optical","group":"OBJオリジナル","country":"日本","note":"","active":true},{"name":"ROKKAKU EYEWEAR DESIGN","cat":"Optical","group":"OBJオリジナル","country":"日本","note":"RAINMAKERコラボ","active":false},{"name":"1011 by Jun Koga","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"10eyevan","cat":"Optical","group":"EYEVAN系","country":"日本","note":"","active":false},{"name":"999,9","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"AKONI","cat":"Optical","group":"AKONI","country":"アメリカ","note":"","active":true},{"name":"AKONI","cat":"SG","group":"AKONI","country":"アメリカ","note":"","active":true},{"name":"Alain Mikli","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"alpagota","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"American Optical","cat":"Optical","group":"","country":"アメリカ","note":"","active":false},{"name":"Anne & Valentin","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"ANY DI","cat":"Optical","group":"","country":"ドイツ","note":"","active":false},{"name":"Arumamika","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"ayame","cat":"Optical","group":"","country":"日本","note":"","active":true},{"name":"BARTON PERREIRA","cat":"Optical","group":"","country":"アメリカ","note":"","active":false},{"name":"BCPC","cat":"Optical","group":"BCPC","country":"日本","note":"","active":false},{"name":"BCPC kids","cat":"Optical","group":"BCPC","country":"日本","note":"","active":false},{"name":"Bird & Cage","cat":"Optical","group":"","country":"アメリカ","note":"","active":false},{"name":"BJ","cat":"Optical","group":"","country":"日本","note":"BJ","active":true},{"name":"BLAC","cat":"Optical","group":"","country":"デンマーク","note":"","active":false},{"name":"BLAKE KUWAHARA","cat":"Optical","group":"","country":"アメリカ","note":"","active":false},{"name":"BOSTON CLUB","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"CAVIAR","cat":"Optical","group":"","country":"","note":"","active":false},{"name":"CAZAL","cat":"Optical","group":"","country":"ドイツ","note":"","active":false},{"name":"CELINE","cat":"SG","group":"","country":"フランス","note":"","active":false},{"name":"CHROME HEARTS","cat":"Optical","group":"","country":"アメリカ","note":"","active":false},{"name":"CLAYTON-FRANKLIN","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"COCO BONITO","cat":"Optical","group":"","country":"","note":"","active":false},{"name":"CUTLER AND GROSS","cat":"Optical","group":"","country":"イギリス","note":"","active":false},{"name":"DIFFUSER","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"DITA","cat":"Optical","group":"DITA","country":"アメリカ","note":"","active":true},{"name":"DITA","cat":"SG","group":"DITA","country":"アメリカ","note":"","active":true},{"name":"DITA Lancier","cat":"Optical","group":"DITA","country":"アメリカ","note":"","active":false},{"name":"DJUAL","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"E5 eyevan","cat":"Optical","group":"EYEVAN系","country":"日本","note":"","active":false},{"name":"EFFECTOR","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"ENALLOID","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"Eque.M","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"EYEVAN","cat":"Optical","group":"EYEVAN系","country":"日本","note":"","active":false},{"name":"EYEVAN 7285","cat":"Optical","group":"EYEVAN系","country":"日本","note":"","active":false},{"name":"Eyevol","cat":"Optical","group":"EYEVAN系","country":"日本","note":"","active":false},{"name":"FACE a FACE","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"FIVESTARISE","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"Fleye Copenhagen","cat":"Optical","group":"","country":"デンマーク","note":"","active":false},{"name":"FREDERIC BEAUSOLEIL","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"GLITCH","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"Gold & Wood","cat":"Optical","group":"","country":"ベルギー","note":"","active":false},{"name":"HAFFMANS & NEUMEISTER","cat":"Optical","group":"","country":"スイス","note":"","active":false},{"name":"Hapter","cat":"Optical","group":"","country":"イタリア","note":"","active":false},{"name":"HENAU","cat":"Optical","group":"","country":"ベルギー","note":"","active":false},{"name":"HOET","cat":"Optical","group":"","country":"ベルギー","note":"","active":false},{"name":"horn-i","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"ic!berlin","cat":"Optical","group":"","country":"ドイツ","note":"","active":true},{"name":"J.F.REY","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"Jacques Durand","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"Jacques Marie Mage","cat":"Optical","group":"","country":"アメリカ","note":"","active":false},{"name":"JAPONISM","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"Jean Paul Gaultier","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"Jean Phillip Joly","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"JMM","cat":"Optical","group":"","country":"日本","note":"","active":true},{"name":"KameManNen","cat":"Optical","group":"","country":"日本","note":"","active":true},{"name":"Ken Okuyama EYES","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"kikiki optique","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"KUBORAUM","cat":"Optical","group":"","country":"ドイツ","note":"","active":false},{"name":"La font","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"LINDBERG","cat":"Optical","group":"","country":"デンマーク","note":"トランクショウあり","active":true},{"name":"Lucas de Staël","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"Lunor","cat":"Optical","group":"","country":"ドイツ","note":"","active":false},{"name":"MARKUS T","cat":"Optical","group":"","country":"ドイツ","note":"","active":false},{"name":"MASUNAGA","cat":"Optical","group":"MASUNAGA","country":"日本","note":"","active":false},{"name":"MASUNAGA K三","cat":"Optical","group":"MASUNAGA","country":"日本","note":"Kenzo Takadaデザイン","active":false},{"name":"MATSUDA","cat":"Optical","group":"MATSUDA","country":"日本","note":"","active":true},{"name":"MATSUDA","cat":"SG","group":"MATSUDA","country":"日本","note":"","active":true},{"name":"MAX PITTION","cat":"SG","group":"","country":"アメリカ","note":"","active":false},{"name":"Metropolitan CROSSbottle","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"MIZ","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"MYKITA","cat":"Optical","group":"MYKITA","country":"ドイツ","note":"トランクショウあり","active":true},{"name":"MYKITA","cat":"SG","group":"MYKITA","country":"ドイツ","note":"トランクショウあり","active":true},{"name":"NATIVE SONS","cat":"Optical","group":"","country":"アメリカ","note":"","active":false},{"name":"OAKLEY","cat":"SG","group":"","country":"アメリカ","note":"スポーツ","active":false},{"name":"OG×OG","cat":"Optical","group":"","country":"イギリス","note":"Oliver Goldsmithコラボ","active":false},{"name":"oliver peoples","cat":"Optical","group":"","country":"アメリカ","note":"","active":false},{"name":"Oliver Goldsmith","cat":"Optical","group":"","country":"イギリス","note":"","active":false},{"name":"One/Three Compound Frame","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"orgreen","cat":"Optical","group":"","country":"デンマーク","note":"","active":false},{"name":"PARASITE","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"Persol","cat":"Optical","group":"","country":"イタリア","note":"","active":false},{"name":"Piero Massaro","cat":"Optical","group":"","country":"イタリア","note":"","active":false},{"name":"Pontet","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"Preciosa","cat":"Optical","group":"","country":"チェコ","note":"","active":false},{"name":"PRESS eyewear","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"Qulo","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"QWON","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"REINHOLD KÜHN","cat":"Optical","group":"","country":"ドイツ","note":"","active":false},{"name":"rh+","cat":"SG","group":"","country":"イタリア","note":"スポーツ","active":false},{"name":"rigards","cat":"Optical","group":"","country":"デンマーク","note":"","active":false},{"name":"RUDY PROJECT JAPAN","cat":"SG","group":"","country":"イタリア","note":"スポーツ","active":false},{"name":"SAINT LAURENT","cat":"SG","group":"","country":"フランス","note":"","active":false},{"name":"SAUVAGE","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"SÉBASTIEN GESLIN","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"Shu Kumeda","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"Silhouette","cat":"Optical","group":"","country":"オーストリア","note":"","active":false},{"name":"SIMON HUKAYA","cat":"Optical","group":"","country":"ベルギー","note":"","active":false},{"name":"Starck eyes","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"T HENRI","cat":"Optical","group":"","country":"アメリカ","note":"","active":false},{"name":"TARIAN","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"TAVAT","cat":"Optical","group":"","country":"イタリア","note":"","active":false},{"name":"theo","cat":"Optical","group":"","country":"ベルギー","note":"","active":false},{"name":"THIERRY LASRY","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"THOM BROWNE","cat":"Optical","group":"","country":"アメリカ","note":"","active":false},{"name":"TOM FORD","cat":"Optical","group":"TOMFORD","country":"アメリカ","note":"","active":false},{"name":"TOM FORD","cat":"SG","group":"TOMFORD","country":"アメリカ","note":"","active":false},{"name":"TOKIO SAITO","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"TRACTION PRODUCTIONS","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"TSUBURA","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"TVR","cat":"Optical","group":"","country":"チェコ","note":"","active":false},{"name":"Vinylize","cat":"Optical","group":"","country":"ハンガリー","note":"","active":false},{"name":"VOA","cat":"Optical","group":"","country":"","note":"","active":false},{"name":"vue-dc…","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"WUJIC JO","cat":"Optical","group":"","country":"フランス","note":"","active":false},{"name":"XIT eyewear","cat":"SG","group":"","country":"","note":"スポーツ","active":false},{"name":"匠 山田光和","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"YOSHINORI AOYAMA","cat":"Optical","group":"","country":"日本","note":"","active":false},{"name":"Even","cat":"Optical","group":"","country":"日本","note":"","active":true},{"name":"OP","cat":"Optical","group":"","country":"日本","note":"","active":true},{"name":"BJ","cat":"Optical","group":"","country":"日本","note":"旧BJ Classic Collection","active":false},{"name":"JDO","cat":"Optical","group":"","country":"日本","note":"","active":true},{"name":"RIGARDS","cat":"Optical","group":"","country":"デンマーク","note":"","active":true},{"name":"EYEVAN系","cat":"Optical","group":"EYEVAN系","country":"日本","note":"EYEVAN/7285/10/E5/Eyevol","active":true},{"name":"EYEVAN系","cat":"SG","group":"EYEVAN系","country":"日本","note":"","active":true},{"name":"スポーツ系","cat":"SG","group":"スポーツ","country":"","note":"","active":true},{"name":"その他海外","cat":"Optical","group":"その他","country":"海外","note":"","active":true},{"name":"その他海外","cat":"SG","group":"その他","country":"海外","note":"","active":true},{"name":"その他国内","cat":"Optical","group":"その他","country":"日本","note":"","active":true},{"name":"その他国内","cat":"SG","group":"その他","country":"日本","note":"","active":true}];
+var BRAND_MASTER_KEY='obj_brand_master';
+
+function loadBrandMaster(){
+  try{var r=localStorage.getItem(BRAND_MASTER_KEY);if(r)return JSON.parse(r);}catch(e){}
+  return DEFAULT_BRANDS.slice();
+}
+function saveBrandMasterData(data){
+  try{localStorage.setItem(BRAND_MASTER_KEY,JSON.stringify(data));}catch(e){}
+  // BRANDSグローバル変数を更新
+  // ブランドマスターは設定管理用。日報・分析用BRANDSは固定
+}
+
+function renderBrandMasterList(){
+  var data=loadBrandMaster();
+  var catColors={Optical:'var(--accent)',SG:'var(--accent2)','Optical/SG':'var(--accent3)',その他:'var(--muted)'};
+  var html='<div id="brandSortable">';
+  for(var i=0;i<data.length;i++){
+    var b=data[i];
+    var col=catColors[b.cat]||'var(--muted)';
+    var gcol=b.group?'var(--orange)':'transparent';
+    var rowBg=i%2===0?'rgba(91,141,238,.18)':'rgba(93,219,180,.14)';
+    var rowBorder=i%2===0?'#5b8dee':'#5ddbb4';
+    html+='<div class="brand-sort-item" data-idx="'+i+'" style="display:flex;align-items:center;gap:8px;padding:9px 8px;border-left:3px solid '+rowBorder+';background:'+rowBg+';border-radius:6px;margin-bottom:4px;">';
+    html+='<span class="drag-handle" style="color:var(--muted);font-size:18px;cursor:grab;padding:0 4px;user-select:none;">⠿</span>';
+    html+='<div style="flex:1;min-width:0;">';
+    html+='<div style="display:flex;align-items:center;gap:6px;">';
+    html+='<span style="font-size:12px;font-weight:600;">'+b.name+'</span>';
+    html+='<span style="background:'+col+'22;color:'+col+';padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;">'+b.cat+'</span>';
+    if(b.group) html+='<span style="background:rgba(255,159,74,.15);color:var(--orange);padding:1px 6px;border-radius:3px;font-size:9px;">'+b.group+'</span>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:6px;margin-top:2px;">';
+    if(b.country) html+='<span style="font-size:10px;color:var(--muted);">🌏 '+b.country+'</span>';
+    if(b.note) html+='<span style="font-size:10px;color:var(--muted);">📝 '+b.note+'</span>';
+    html+='</div></div>';
+    var activeBg=b.active?'rgba(93,219,180,.2)':'var(--surface2)';
+    var activeColor=b.active?'var(--accent3)':'var(--muted)';
+    var activeBorder=b.active?'var(--accent3)':'var(--border)';
+    var activeLabel=b.active?'✓ 日報':'+ 日報';
+    html+='<div style="display:flex;gap:4px;">';
+    html+='<button onclick="toggleBrandActive('+i+')" style="flex-shrink:0;background:'+activeBg+';border:1px solid '+activeBorder+';color:'+activeColor+';border-radius:6px;padding:5px 8px;font-size:10px;cursor:pointer;white-space:nowrap;">'+activeLabel+'</button>';
+    html+='<button onclick="showBrandForm('+i+')" style="flex-shrink:0;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">編集</button>';
+    html+='</div>';
+    html+='</div>';
+  }
+  html+='</div>';
+  html+='<div style="font-size:11px;color:var(--muted);margin-top:8px;">✓日報 = 日報入力・分析グラフに反映中　</div><div style="font-size:11px;color:var(--muted);margin-top:4px;text-align:right;">計 '+data.length+' ブランド　⠿ で並び替え</div>';
+  var el=document.getElementById('brandMasterList');
+  if(el){el.innerHTML=html;initBrandSortable();}
+}
+
+
+function initBrandSortable(){
+  var container=document.getElementById('brandSortable');
+  if(!container)return;
+  var dragging=null,placeholder=null;
+  function getItems(){return Array.prototype.slice.call(container.querySelectorAll('.brand-sort-item'));}
+  function onDragStart(e,item){
+    dragging=item;item.style.opacity='0.4';
+    placeholder=document.createElement('div');
+    placeholder.style.cssText='height:'+item.offsetHeight+'px;background:rgba(91,141,238,.15);border:2px dashed #5b8dee;border-radius:6px;margin-bottom:4px;';
+    item.parentNode.insertBefore(placeholder,item.nextSibling);
+  }
+  function onDragMove(e){
+    if(!dragging)return;
+    var clientY=e.touches?e.touches[0].clientY:e.clientY;
+    var items=getItems();
+    for(var i=0;i<items.length;i++){
+      if(items[i]===dragging)continue;
+      var rect=items[i].getBoundingClientRect();
+      if(clientY<rect.top+rect.height/2){items[i].parentNode.insertBefore(placeholder,items[i]);return;}
+    }
+    if(items.length)items[items.length-1].parentNode.appendChild(placeholder);
+  }
+  function onDragEnd(){
+    if(!dragging)return;
+    dragging.style.opacity='1';
+    container.insertBefore(dragging,placeholder);
+    if(placeholder.parentNode)placeholder.parentNode.removeChild(placeholder);
+    var newOrder=getItems().map(function(el){return parseInt(el.getAttribute('data-idx'));});
+    var oldData=loadBrandMaster();
+    var newData=newOrder.map(function(i){return oldData[i];});
+    saveBrandMasterData(newData);
+    dragging=null;placeholder=null;
+    renderBrandMasterList();
+  }
+  var items=getItems();
+  for(var i=0;i<items.length;i++){
+    (function(item){
+      var handle=item.querySelector('.drag-handle');
+      if(!handle)return;
+      handle.addEventListener('mousedown',function(e){
+        e.preventDefault();onDragStart(e,item);
+        document.addEventListener('mousemove',onDragMove);
+        document.addEventListener('mouseup',function up(){onDragEnd();document.removeEventListener('mousemove',onDragMove);document.removeEventListener('mouseup',up);});
+      });
+      handle.addEventListener('touchstart',function(e){
+        onDragStart(e,item);
+        document.addEventListener('touchmove',onDragMove,{passive:true});
+        document.addEventListener('touchend',function up(){onDragEnd();document.removeEventListener('touchmove',onDragMove);document.removeEventListener('touchend',up);});
+      },{passive:true});
+    })(items[i]);
+  }
+}
+
+
+function showBrandForm(idx){
+  var fc=document.getElementById('brandFormCard');
+  var ft=document.getElementById('brandFormTitle');
+  var db=document.getElementById('bfDeleteBtn');
+  if(!fc)return;
+  if(idx!==null&&idx!==undefined){
+    var data=loadBrandMaster();
+    var b=data[idx];
+    document.getElementById('bfIdx').value=idx;
+    document.getElementById('bfName').value=b.name||'';
+    document.getElementById('bfCat').value=b.cat||'Optical';
+    document.getElementById('bfCountry').value=b.country||'';
+    document.getElementById('bfGroup').value=b.group||'';
+    document.getElementById('bfNote').value=b.note||'';
+    if(ft)ft.textContent='ブランド編集';
+    if(db)db.style.display='block';
+  }else{
+    document.getElementById('bfIdx').value='';
+    document.getElementById('bfName').value='';
+    document.getElementById('bfCat').value='Optical';
+    document.getElementById('bfCountry').value='';
+    document.getElementById('bfGroup').value='';
+    document.getElementById('bfNote').value='';
+    if(ft)ft.textContent='ブランド追加';
+    if(db)db.style.display='none';
+  }
+  fc.style.display='block';
+  fc.scrollIntoView({behavior:'smooth'});
+}
+function hideBrandForm(){
+  var fc=document.getElementById('brandFormCard');
+  if(fc)fc.style.display='none';
+}
+
+function toggleBrandActive(idx){
+  var data=loadBrandMaster();
+  data[idx].active=!data[idx].active;
+  saveBrandMasterData(data);
+  // BRANDSを更新
+  updateActiveBrands();
+  renderBrandMasterList();
+  var name=data[idx].name+'('+(data[idx].cat||'')+')';
+  showToast(data[idx].active?name+' を日報に追加 ✓':name+' を日報から除外 ✓');
+}
+function updateActiveBrands(){
+  var data=loadBrandMaster();
+  var active=[];
+  for(var i=0;i<data.length;i++){
+    if(data[i].active){
+      var display=data[i].cat?data[i].name+'('+data[i].cat+')':data[i].name;
+      active.push(display);
+    }
+  }
+  if(active.length>0) BRANDS=active;
+}
+function saveBrandMaster(){
+  var name=document.getElementById('bfName').value.trim();
+  if(!name){showToast('ブランド名を入力してください',true);return;}
+  var data=loadBrandMaster();
+  var idx=document.getElementById('bfIdx').value;
+  var b={
+    name:name,
+    cat:document.getElementById('bfCat').value,
+    group:(document.getElementById('bfGroup')?document.getElementById('bfGroup').value.trim():''),
+    country:document.getElementById('bfCountry').value.trim(),
+    note:document.getElementById('bfNote').value.trim()
+  };
+  if(idx!==''){
+    data[parseInt(idx)]=b;
+  }else{
+    data.push(b);
+  }
+  saveBrandMasterData(data);
+  renderBrandMasterList();
+  hideBrandForm();
+  showToast('ブランドを保存しました ✓');
+}
+function deleteBrandMaster(){
+  var idx=document.getElementById('bfIdx').value;
+  if(idx==='')return;
+  var data=loadBrandMaster();
+  var name=data[parseInt(idx)].name;
+  data.splice(parseInt(idx),1);
+  saveBrandMasterData(data);
+  renderBrandMasterList();
+  hideBrandForm();
+  showToast(name+' を削除しました ✓');
+}
+
+// ══ APIキー管理 ══
+var API_KEY_STORAGE='obj_anthropic_key';
+function saveApiKey(){
+  var el=document.getElementById('apiKeyInput');
+  var key=el?el.value.trim():'';
+  if(!key||key.indexOf('sk-ant-')<0){showToast('正しいAPIキーを入力してください',true);return;}
+  localStorage.setItem(API_KEY_STORAGE,key);
+  updateApiKeyStatus();
+  showToast('APIキーを設定しました ✓');
+}
+function clearApiKey(){
+  localStorage.removeItem(API_KEY_STORAGE);
+  var el=document.getElementById('apiKeyInput');if(el)el.value='';
+  updateApiKeyStatus();
+  showToast('APIキーを削除しました');
+}
+function getApiKey(){return localStorage.getItem(API_KEY_STORAGE)||'';}
+function updateApiKeyStatus(){
+  var key=getApiKey();
+  var el=document.getElementById('apiKeyStatus');
+  if(!el)return;
+  if(key){
+    el.textContent='✓ APIキー設定済み ('+key.slice(0,12)+'...)';
+    el.style.color='var(--accent3)';
+  }else{
+    el.textContent='未設定 — APIキーを入力してください';
+    el.style.color='var(--muted)';
+  }
+}
+
+// ══ Google Drive同期 ══
+var GAS_URL_KEY='obj_gas_url';
+function gasSetStatus(msg,color){var el=document.getElementById('gdriveStatus');if(el){el.textContent=msg;el.style.color=color||'var(--muted)';}}
+function gasSaveUrl(){
+  var el=document.getElementById('gasUrl');
+  var url=el?el.value.trim():'';
+  if(!url||url.indexOf('script.google.com')<0){showToast('正しいURLを入力してください',true);return;}
+  localStorage.setItem(GAS_URL_KEY,url);
+  gasOnReady(url);
+}
+function gasOnReady(url){
+  gasSetStatus('✓ 接続済み: '+url.slice(0,40)+'...','var(--accent3)');
+  var actions=document.getElementById('gdriveActions');if(actions)actions.style.display='block';
+}
+function gdriveSave(){
+  var url=localStorage.getItem(GAS_URL_KEY);
+  if(!url){showToast('先にURLを設定してください',true);return;}
+  gasSetStatus('☁️ 保存中...','var(--accent2)');
+  fetch(url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(DB)})
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(res.status==='ok'){gasSetStatus('✓ 保存完了: '+new Date().toLocaleString('ja-JP'),'var(--accent3)');showToast('Driveに保存しました ✓');}
+    else throw new Error();
+  })
+  .catch(function(){gasSetStatus('保存失敗 — URLを確認してください','var(--danger)');showToast('保存失敗',true);});
+}
+function gdriveLoad(){
+  var url=localStorage.getItem(GAS_URL_KEY);
+  if(!url){showToast('先にURLを設定してください',true);return;}
+  gasSetStatus('📥 読み込み中...','var(--accent2)');
+  fetch(url)
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if(data.status==='empty'){showToast('Driveにデータがありません',true);gasSetStatus('Driveにデータなし','var(--muted)');return;}
+    if(!data.daily)throw new Error();
+    DB=data;if(!DB.events)DB.events=[];
+    saveDB(DB);buildYearTabs();updateDashboard();
+    gasSetStatus('✓ 読込完了: '+new Date().toLocaleString('ja-JP'),'var(--accent3)');
+    showToast('Driveから読み込みました ✓');
+  })
+  .catch(function(){gasSetStatus('読み込み失敗 — URLを確認してください','var(--danger)');showToast('読み込み失敗',true);});
+}
+function gdriveClear(){
+  localStorage.removeItem(GAS_URL_KEY);
+  var el=document.getElementById('gasUrl');if(el)el.value='';
+  var actions=document.getElementById('gdriveActions');if(actions)actions.style.display='none';
+  gasSetStatus('未設定 — URLを入力してください','var(--muted)');
+  showToast('リセットしました');
+}
+function copyGasCode(){
+  var code="var N='OBJ_data.json';\nfunction doGet(e){\n  var f=DriveApp.getFilesByName(N);\n  var data=f.hasNext()?f.next().getBlob().getDataAsString():JSON.stringify({status:'empty'});\n  return ContentService.createTextOutput(data).setMimeType(ContentService.MimeType.JSON);\n}\nfunction doPost(e){\n  var f=DriveApp.getFilesByName(N);\n  if(f.hasNext())f.next().setContent(e.postData.contents);\n  else DriveApp.createFile(N,e.postData.contents,MimeType.PLAIN_TEXT);\n  return ContentService.createTextOutput(JSON.stringify({status:'ok'})).setMimeType(ContentService.MimeType.JSON);\n}";
+  navigator.clipboard.writeText(code).then(function(){showToast('コードをコピーしました ✓');}).catch(function(){showToast('コピー失敗',true);});
+}
+function gasRestoreSession(){
+  var url=localStorage.getItem(GAS_URL_KEY);
+  var el=document.getElementById('gasUrl');
+  if(url){if(el)el.value=url;gasOnReady(url);}
+}
+
+// ══ リサイズ ══
+var resizeTimer;
+window.addEventListener('resize',function(){
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(function(){updateMonthlyChart();updateBrandView();updateCategoryChart();},150);
+});
+
+// ══ 初期化 ══
+DB=loadDB();
+// ブランドマスターをBRANDSに反映
+
+buildYearTabs();
+initSecurity();
+setTimeout(function(){
+  var el=document.getElementById('chartMonthly');
+  if(!el||el.parentElement.offsetWidth===0){setTimeout(arguments.callee,50);return;}
+  updateDashboard();
+  gasRestoreSession();
+},100);
+
+</script>
+</body>
+</html>
