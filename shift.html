@@ -561,7 +561,7 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
 
 <!-- 他店舗出張設定モーダル -->
 <div class="overlay" id="outgoing-overlay" onclick="closeOutgoingBg(event)">
-  <div class="modal" style="max-height:88vh;overflow-y:auto">
+  <div class="modal" style="max-height:90vh;display:flex;flex-direction:column;overflow:hidden;padding:20px 16px 0;"><div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
     <div class="modal-title" id="outgoing-modal-title">他店舗出張を設定</div>
     <div style="font-size:12px;color:#8e8e93;margin-bottom:10px;line-height:1.5">日付をタップして出張先を設定（再タップで解除）</div>
     <!-- 出張先選択 -->
@@ -840,7 +840,7 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
 
 <!-- スタッフ共有コード生成モーダル -->
 <div class="overlay" id="staff-share-overlay" onclick="closeStaffShareBg(event)">
-  <div class="modal" style="max-height:90vh;overflow-y:auto">
+  <div class="modal" style="max-height:90vh;display:flex;flex-direction:column;overflow:hidden;padding:20px 16px 0;"><div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
     <div class="modal-title">👤 スタッフ共有コードを生成</div>
     <div style="font-size:12px;color:#8e8e93;margin-bottom:12px;line-height:1.5">
       スタッフがアプリでシフトを確認できるコードを生成します。<br>LINEやメールで各スタッフに送ってください。
@@ -914,7 +914,7 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
 
 <!-- トランクショー管理モーダル -->
 <div class="overlay" id="ts-overlay" onclick="closeTSModalBg(event)">
-  <div class="modal" style="max-height:90vh;overflow-y:auto">
+  <div class="modal" style="max-height:90vh;display:flex;flex-direction:column;overflow:hidden;padding:20px 16px 0;"><div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
     <div class="modal-title">🎪 トランクショー管理</div>
     <div style="font-size:12px;color:#8e8e93;margin-bottom:12px;line-height:1.5">
       トランクショー開催日をカレンダーに表示します。売上分析アプリから読み込むか、手動で追加できます。
@@ -957,8 +957,9 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
 
 <!-- 保存・読込モーダル -->
 <div class="overlay" id="save-overlay" onclick="closeSaveModalBg(event)">
-  <div class="modal" style="max-height:90vh;overflow-y:auto">
-    <div class="modal-title">💾 データ保存・読込</div>
+  <div class="modal" style="max-height:90vh;display:flex;flex-direction:column;overflow:hidden;padding:20px 16px 0;">
+    <div style="flex-shrink:0;"><div class="modal-title" style="margin-bottom:12px;">💾 データ保存・読込</div></div>
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
 
     <!-- ブラウザ保存 -->
     <div style="background:#f0fff4;border-radius:10px;padding:12px 14px;margin-bottom:12px">
@@ -1008,7 +1009,8 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
       <div style="font-size:11px;margin-top:5px" id="paste-msg"></div>
     </div>
 
-    <div class="modal-btns">
+    </div><!-- scroll end -->
+    <div class="modal-btns" style="flex-shrink:0;padding:14px 0 calc(20px + env(safe-area-inset-bottom));border-top:.5px solid #f2f2f7;margin-top:8px;">
       <button class="modal-cancel" onclick="closeSaveModal()">閉じる</button>
     </div>
   </div>
