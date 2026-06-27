@@ -138,7 +138,7 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
 .cand-apply.paid{background:#e8f4fd;color:#0066cc}
 .cand-apply.summer{background:#fff0e0;color:#cc6600}
 /* modal */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:flex-end;justify-content:center}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;align-items:flex-end;justify-content:center}
 .overlay.open{display:flex}
 .modal{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:480px;padding:20px 16px 40px;animation:slideUp 0.2s ease}
 @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -561,7 +561,7 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
 
 <!-- 他店舗出張設定モーダル -->
 <div class="overlay" id="outgoing-overlay" onclick="closeOutgoingBg(event)">
-  <div class="modal" style="max-height:90vh;overflow-y:auto">
+  <div class="modal" style="max-height:calc(88vh - env(safe-area-inset-bottom,0px) - 60px);overflow-y:auto">
     <div class="modal-title" id="outgoing-modal-title">他店舗出張を設定</div>
     <div style="font-size:12px;color:#8e8e93;margin-bottom:10px;line-height:1.5">日付をタップして出張先を設定（再タップで解除）</div>
     <!-- 出張先選択 -->
@@ -764,7 +764,7 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
       </div>
       <div class="param-row"><span class="param-lbl">最低出勤人数</span><input class="param-val" type="number" id="group-min" value="2" min="1" max="6"></div>
     </div>
-    <div style="margin-top:10px;display:flex;gap:6px;align-items:center">
+    <div style="margin-top:10px;display:flex;gap:6px;align-items:center;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 10px)">
       <label class="tog"><input type="checkbox" id="new-rule-active" checked><span class="tog-slider"></span></label>
       <span style="font-size:12px;color:#8e8e93">ロジックに反映</span>
       <button class="btn btn-blue" onclick="addCustomRule()" style="margin-left:auto;padding:8px 16px">追加</button>
@@ -840,7 +840,7 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
 
 <!-- スタッフ共有コード生成モーダル -->
 <div class="overlay" id="staff-share-overlay" onclick="closeStaffShareBg(event)">
-  <div class="modal" style="max-height:90vh;overflow-y:auto">
+  <div class="modal" style="max-height:calc(88vh - env(safe-area-inset-bottom,0px) - 60px);overflow-y:auto">
     <div class="modal-title">👤 スタッフ共有コードを生成</div>
     
     <div style="font-size:12px;color:#8e8e93;margin-bottom:12px;line-height:1.5">
@@ -880,7 +880,7 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
 
 <!-- 日別手動編集モーダル -->
 <div class="overlay" id="day-edit-overlay" onclick="closeDayEditBg(event)">
-  <div class="modal" style="max-height:88vh;display:flex;flex-direction:column;overflow:hidden;padding:20px 16px 0;">
+  <div class="modal" style="max-height:calc(88vh - env(safe-area-inset-bottom,0px) - 60px);display:flex;flex-direction:column;overflow:hidden;padding:20px 16px 0;">
     <!-- ヘッダー固定 -->
     <div style="flex-shrink:0;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
@@ -907,7 +907,7 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
 </div>
 <!-- トランクショー管理モーダル -->
 <div class="overlay" id="ts-overlay" onclick="closeTSModalBg(event)">
-  <div class="modal" style="max-height:90vh;overflow-y:auto">
+  <div class="modal" style="max-height:calc(88vh - env(safe-area-inset-bottom,0px) - 60px);overflow-y:auto">
     <div class="modal-title">🎪 トランクショー管理</div>
     
     <div style="font-size:12px;color:#8e8e93;margin-bottom:12px;line-height:1.5">
@@ -951,7 +951,7 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
 
 <!-- 保存・読込モーダル -->
 <div class="overlay" id="save-overlay" onclick="closeSaveModalBg(event)">
-  <div class="modal" style="max-height:88vh;overflow-y:auto;padding-bottom:0;">
+  <div class="modal" style="max-height:calc(88vh - env(safe-area-inset-bottom,0px) - 60px);overflow-y:auto;padding-bottom:0;">
     <div class="modal-title">💾 データ保存・読込</div>
 
     <!-- ブラウザ保存 -->
@@ -1008,7 +1008,9 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
 </div>
 
 <!-- 編集モーダル -->
-<d>
+<div class="overlay" id="edit-overlay" onclick="closeEditModalBg(event)">
+  <div class="modal">
+    <div class="modal-title">ルールを編集</div>
     <textarea id="edit-text" rows="3"></textarea>
     <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
       <label class="tog"><input type="checkbox" id="edit-active"><span class="tog-slider"></span></label>
@@ -2789,6 +2791,7 @@ function openEditModal(i){
 }
 function closeEditModal(){document.getElementById('edit-overlay').classList.remove('open');editingIndex=-1;}
 function closeModalBg(e){if(e.target===document.getElementById('edit-overlay'))closeEditModal();}
+function closeEditModalBg(e){if(e.target===document.getElementById('edit-overlay'))closeEditModal();}
 function saveEdit(){
   if(editingIndex<0)return;
   var r=customRules[editingIndex];
