@@ -880,33 +880,23 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
 
 <!-- 日別手動編集モーダル -->
 <div class="overlay" id="day-edit-overlay" onclick="closeDayEditBg(event)">
-  <div class="modal" style="max-height:90vh;display:flex;flex-direction:column;overflow:hidden;padding:20px 16px 0;">
-    <!-- ヘッダー（固定） -->
-    <div style="flex-shrink:0">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <div class="modal-title" id="day-edit-title" style="margin-bottom:0"></div>
-        <span id="day-edit-badge" style="font-size:10px;padding:2px 8px;border-radius:10px;background:#f5f5f7;color:#8e8e93"></span>
-      </div>
-      <div style="font-size:12px;color:#8e8e93;margin-bottom:12px">タップで出勤 / 休みを切り替え</div>
+  <div class="modal" style="max-height:88vh;overflow-y:auto;padding-bottom:0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="modal-title" id="day-edit-title" style="margin-bottom:0"></div>
+      <span id="day-edit-badge" style="font-size:10px;padding:2px 8px;border-radius:10px;background:#f5f5f7;color:#8e8e93"></span>
     </div>
-
-    <!-- スクロール可能なコンテンツ -->
-    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
-      <!-- スタッフトグル -->
-      <div id="day-edit-staff"></div>
-
-      <!-- 応援スタッフ -->
-      <div id="day-edit-guests-wrap" style="display:none;margin-top:10px;padding-top:10px;border-top:.5px solid #f2f2f7">
-        <div style="font-size:11px;font-weight:600;color:#8e8e93;margin-bottom:6px">🤝 応援スタッフ（当日出勤）</div>
-        <div id="day-edit-guests"></div>
-      </div>
-
-      <!-- ルール確認 -->
-      <div id="day-edit-check"></div>
+    <div style="font-size:12px;color:#8e8e93;margin-bottom:12px">タップで出勤 / 休みを切り替え</div>
+    <!-- スタッフトグル -->
+    <div id="day-edit-staff"></div>
+    <!-- 応援スタッフ -->
+    <div id="day-edit-guests-wrap" style="display:none;margin-top:10px;padding-top:10px;border-top:.5px solid #f2f2f7">
+      <div style="font-size:11px;font-weight:600;color:#8e8e93;margin-bottom:6px">🤝 応援スタッフ（当日出勤）</div>
+      <div id="day-edit-guests"></div>
     </div>
-
-    <!-- ボタン（常に下部に固定） -->
-    <div class="modal-btns" style="flex-shrink:0;padding:14px 0 calc(20px + env(safe-area-inset-bottom));border-top:.5px solid #f2f2f7;margin-top:8px;">
+    <!-- ルール確認 -->
+    <div id="day-edit-check"></div>
+    <!-- ボタン（sticky で常に見える）-->
+    <div class="modal-btns" style="position:sticky;bottom:0;background:#fff;padding:12px 0 calc(12px + env(safe-area-inset-bottom));border-top:.5px solid #f2f2f7;margin-top:8px;">
       <button class="modal-cancel" onclick="closeDayEditModal()">キャンセル</button>
       <button class="modal-save" onclick="saveDayEdit()">保存</button>
     </div>
@@ -959,9 +949,8 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
 
 <!-- 保存・読込モーダル -->
 <div class="overlay" id="save-overlay" onclick="closeSaveModalBg(event)">
-  <div class="modal" style="max-height:90vh;display:flex;flex-direction:column;overflow:hidden;padding:20px 16px 0;">
-    <div style="flex-shrink:0;"><div class="modal-title" style="margin-bottom:12px;">💾 データ保存・読込</div></div>
-    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+  <div class="modal" style="max-height:88vh;overflow-y:auto;padding-bottom:0;">
+    <div class="modal-title">💾 データ保存・読込</div>
 
     <!-- ブラウザ保存 -->
     <div style="background:#f0fff4;border-radius:10px;padding:12px 14px;margin-bottom:12px">
@@ -1010,19 +999,14 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
       <button type="button" onclick="importFromPaste()" style="width:100%;margin-top:6px;padding:9px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:#8e44ad;color:#fff;font-family:inherit">📥 貼り付けたコードを読み込む</button>
       <div style="font-size:11px;margin-top:5px" id="paste-msg"></div>
     </div>
-
-    </div><!-- scroll end -->
-    <div class="modal-btns" style="flex-shrink:0;padding:14px 0 calc(20px + env(safe-area-inset-bottom));border-top:.5px solid #f2f2f7;margin-top:8px;">
+    <div class="modal-btns" style="position:sticky;bottom:0;background:#fff;padding:12px 0 calc(12px + env(safe-area-inset-bottom));border-top:.5px solid #f2f2f7;margin-top:8px;">
       <button class="modal-cancel" onclick="closeSaveModal()">閉じる</button>
     </div>
   </div>
 </div>
 
 <!-- 編集モーダル -->
-<div class="overlay" id="edit-overlay" onclick="closeModalBg(event)">
-  <div class="modal">
-    <div class="modal-title">ルールを編集</div>
-    <div style="font-size:12px;color:#8e8e93;margin-bottom:8px" id="edit-desc"></div>
+<d>
     <textarea id="edit-text" rows="3"></textarea>
     <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
       <label class="tog"><input type="checkbox" id="edit-active"><span class="tog-slider"></span></label>
