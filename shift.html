@@ -880,29 +880,31 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
 
 <!-- 日別手動編集モーダル -->
 <div class="overlay" id="day-edit-overlay" onclick="closeDayEditBg(event)">
-  <div class="modal" style="max-height:88vh;overflow-y:auto;padding-bottom:0;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <div class="modal-title" id="day-edit-title" style="margin-bottom:0"></div>
-      <span id="day-edit-badge" style="font-size:10px;padding:2px 8px;border-radius:10px;background:#f5f5f7;color:#8e8e93"></span>
+  <div class="modal" style="max-height:88vh;display:flex;flex-direction:column;overflow:hidden;padding:20px 16px 0;">
+    <!-- ヘッダー固定 -->
+    <div style="flex-shrink:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div class="modal-title" id="day-edit-title" style="margin-bottom:0"></div>
+        <span id="day-edit-badge" style="font-size:10px;padding:2px 8px;border-radius:10px;background:#f5f5f7;color:#8e8e93"></span>
+      </div>
+      <div style="font-size:12px;color:#8e8e93;margin-bottom:12px">タップで出勤 / 休みを切り替え</div>
     </div>
-    <div style="font-size:12px;color:#8e8e93;margin-bottom:12px">タップで出勤 / 休みを切り替え</div>
-    <!-- スタッフトグル -->
-    <div id="day-edit-staff"></div>
-    <!-- 応援スタッフ -->
-    <div id="day-edit-guests-wrap" style="display:none;margin-top:10px;padding-top:10px;border-top:.5px solid #f2f2f7">
-      <div style="font-size:11px;font-weight:600;color:#8e8e93;margin-bottom:6px">🤝 応援スタッフ（当日出勤）</div>
-      <div id="day-edit-guests"></div>
+    <!-- スクロールコンテンツ min-height:0 が iOS Safari で必須 -->
+    <div style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+      <div id="day-edit-staff"></div>
+      <div id="day-edit-guests-wrap" style="display:none;margin-top:10px;padding-top:10px;border-top:.5px solid #f2f2f7">
+        <div style="font-size:11px;font-weight:600;color:#8e8e93;margin-bottom:6px">🤝 応援スタッフ（当日出勤）</div>
+        <div id="day-edit-guests"></div>
+      </div>
+      <div id="day-edit-check"></div>
     </div>
-    <!-- ルール確認 -->
-    <div id="day-edit-check"></div>
-    <!-- ボタン（sticky で常に見える）-->
-    <div class="modal-btns" style="position:sticky;bottom:0;background:#fff;padding:12px 0 calc(12px + env(safe-area-inset-bottom));border-top:.5px solid #f2f2f7;margin-top:8px;">
+    <!-- ボタン固定（flex-shrinkで押しつぶされない） -->
+    <div class="modal-btns" style="flex-shrink:0;padding:12px 0 calc(12px + env(safe-area-inset-bottom));border-top:.5px solid #f2f2f7;margin-top:0;">
       <button class="modal-cancel" onclick="closeDayEditModal()">キャンセル</button>
       <button class="modal-save" onclick="saveDayEdit()">保存</button>
     </div>
   </div>
 </div>
-
 <!-- トランクショー管理モーダル -->
 <div class="overlay" id="ts-overlay" onclick="closeTSModalBg(event)">
   <div class="modal" style="max-height:90vh;overflow-y:auto">
