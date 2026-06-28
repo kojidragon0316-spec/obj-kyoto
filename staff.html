@@ -41,12 +41,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .sc.sun-c .sd{color:#ff3b30}.sc.sat-c .sd{color:#007aff}
 .sc.today-c{box-shadow:0 0 0 2px #007aff inset}
 /* 全員シフトセル */
-.tc{border-radius:6px;padding:4px 3px;min-height:72px;background:#f9f9fb;display:flex;flex-direction:column;gap:2px}
+.tc{border-radius:6px;padding:4px 3px 3px;background:#f9f9fb;display:flex;flex-direction:column;gap:0}
 .tc.empty{background:transparent}
-.tc.hwday{background:#fff5f5}
-.tc .td{font-size:11px;font-weight:600;color:#8e8e93;margin-bottom:2px;line-height:1}
-.tc.sun-c .td{color:#ff3b30}.tc.sat-c .td{color:#007aff}.tc.hwday .td{color:#ff3b30}
-.chip-s{font-size:10px;padding:2px 4px;border-radius:3px;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.tc.hwday{background:#fff8f0}
+.tc .td{font-size:11px;font-weight:600;color:#8e8e93;margin-bottom:3px;line-height:1;display:flex;align-items:center;gap:2px}
+.tc.sun-c .td{color:#ff3b30}.tc.sat-c .td{color:#007aff}.tc.hwday .td{color:#ff6600}
+.tc-chips{display:flex;flex-wrap:wrap;gap:2px;align-content:flex-start}
+.chip-s{font-size:9px;padding:1px 4px;border-radius:10px;line-height:1.5;font-weight:600;white-space:nowrap}
 .chip-off{font-size:7px;color:#c7c7cc;padding:0 1px}
 /* 希望休セル */
 .wc{border-radius:8px;padding:3px 2px;min-height:50px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:1.5px solid transparent}
@@ -116,7 +117,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .toast.show{opacity:1}
 /* トランクショー */
 .sc-ts{font-size:7px;background:#6A1B9A;color:#fff;padding:1px 3px;border-radius:3px;line-height:1.4;margin-top:1px;font-weight:700;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%}
-.tc-ts{font-size:9px;background:#6A1B9A;color:#fff;padding:2px 4px;border-radius:3px;line-height:1.4;font-weight:700;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.tc-ts{font-size:8px;background:#6A1B9A;color:#fff;padding:1px 4px;border-radius:10px;line-height:1.5;font-weight:600;white-space:nowrap}
 /* 超過バッジ */
 .excess-b{display:inline-block;background:#ff3b30;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px}
 .ok-b{display:inline-block;background:#34c759;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px}
@@ -126,10 +127,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .sc.away-tokyo{background:#37474F}.sc.away-tokyo .sd{color:#fff;font-weight:700}.sc.away-tokyo .ss{background:rgba(255,255,255,.25);color:#fff}
 .sc.away-overseas{background:#00695C}.sc.away-overseas .sd{color:#fff;font-weight:700}.sc.away-overseas .ss{background:rgba(255,255,255,.25);color:#fff}
 /* 全員ビュー 出張チップ */
-.chip-away-osaka{font-size:10px;padding:2px 4px;border-radius:3px;background:#283593;color:#fff;font-weight:700;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.chip-away-east{font-size:10px;padding:2px 4px;border-radius:3px;background:#880E4F;color:#fff;font-weight:700;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.chip-away-tokyo{font-size:10px;padding:2px 4px;border-radius:3px;background:#37474F;color:#fff;font-weight:700;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.chip-away-overseas{font-size:10px;padding:2px 4px;border-radius:3px;background:#00695C;color:#fff;font-weight:700;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.chip-away-osaka{font-size:9px;padding:1px 4px;border-radius:10px;background:#283593;color:#fff;font-weight:600;line-height:1.5;white-space:nowrap}
+.chip-away-east{font-size:9px;padding:1px 4px;border-radius:10px;background:#880E4F;color:#fff;font-weight:600;line-height:1.5;white-space:nowrap}
+.chip-away-tokyo{font-size:9px;padding:1px 4px;border-radius:10px;background:#37474F;color:#fff;font-weight:600;line-height:1.5;white-space:nowrap}
+.chip-away-overseas{font-size:9px;padding:1px 4px;border-radius:10px;background:#00695C;color:#fff;font-weight:600;line-height:1.5;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -812,20 +813,26 @@ function renderAllShift(){
     var cls='tc';
     if(hw)cls+=' hwday';else if(dow===0)cls+=' sun-c';else if(dow===6)cls+=' sat-c';
     var tsDay=ts.filter(function(t){return t.d===day;});
-    var inner='<div class="td">'+day+(hname?'<span style="font-size:7px">祝</span>':'')+'</div>';
+    // 日付ヘッダ（祝日バッジ付き）
+    var hwBadge=hname?'<span style="font-size:8px;background:#ff6600;color:#fff;border-radius:3px;padding:0 3px;margin-left:2px">祝</span>':'';
+    var inner='<div class="td">'+day+hwBadge+'</div>';
+    // チップ横並び
+    var chips='';
     shiftData.s.forEach(function(s){
       var st=typeof s.d==='string'?s.d[day-1]:(s.d?s.d[String(day)]||'o':'o');
       var isMine=(s.nm||s.name)===staffName;
       var ini=(s.ini||s.nm||'?').charAt(0);
-      if(st==='w') inner+='<div class="chip-s" style="background:'+(s.bg||'#eee')+';color:'+(s.cl||s.color||'#333')+(isMine?';font-weight:700':'')+'">'+(isMine?'['+ini+']':ini)+'</div>';
-      else if(st==='p') inner+='<div class="chip-s" style="background:#1565C0;color:#fff">'+ini+'有</div>';
-      else if(st==='s') inner+='<div class="chip-s" style="background:#E65100;color:#fff">'+ini+'夏</div>';
-      else if(st==='a') inner+='<div class="chip-away-osaka">'+ini+'大</div>';
-      else if(st==='e') inner+='<div class="chip-away-east">'+ini+'東</div>';
-      else if(st==='t') inner+='<div class="chip-away-tokyo">'+ini+'京</div>';
-      else if(st==='k') inner+='<div class="chip-away-overseas">'+ini+'海</div>';
+      var outline=isMine?'box-shadow:0 0 0 1.5px #1d1d1f;':'';
+      if(st==='w')       chips+='<span class="chip-s" style="background:'+(s.bg||'#eee')+';color:'+(s.cl||s.color||'#333')+';'+outline+'">'+ini+'</span>';
+      else if(st==='p')  chips+='<span class="chip-s" style="background:#1565C0;color:#fff;'+outline+'">'+ini+'有</span>';
+      else if(st==='s')  chips+='<span class="chip-s" style="background:#E65100;color:#fff;'+outline+'">'+ini+'夏</span>';
+      else if(st==='a')  chips+='<span class="chip-away-osaka">'+ini+'大</span>';
+      else if(st==='e')  chips+='<span class="chip-away-east">'+ini+'東</span>';
+      else if(st==='t')  chips+='<span class="chip-away-tokyo">'+ini+'京</span>';
+      else if(st==='k')  chips+='<span class="chip-away-overseas">'+ini+'海</span>';
     });
-    if(tsDay.length>0)inner+='<div class="tc-ts">🎪'+escTs(tsDay[0].nm||'TS')+'</div>';
+    if(tsDay.length>0) chips+='<span class="tc-ts">🎪TS</span>';
+    inner+='<div class="tc-chips">'+chips+'</div>';
     html+='<div class="'+cls+'">'+inner+'</div>';
   }
   document.getElementById('all-cal').innerHTML=html;
