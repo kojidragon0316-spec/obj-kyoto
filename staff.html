@@ -630,14 +630,14 @@ function renderMyShift(){
   // ステータス→アイコン・色マップ
   function cellStyle(status,hw,hname){
     if(hw)return{bg:'#fff3e0',numC:'#c2410c',icon:'☀️',iconC:'#ff9500',lbl:hname?hname.slice(0,2):'祝',lblC:'#c2410c'};
-    if(status==='w')return{bg:'#dcf5e5',numC:'#1a7f37',icon:'🏪',iconC:'#0F6E56',lbl:'出勤',lblC:'#1a7f37'};
+    if(status==='w')return{bg:'#dcf5e5',numC:'#1a7f37',icon:'🏪',iconC:'#0F6E56',lbl:'出勤',lblC:'#1a7f37'}; // work
     if(status==='p')return{bg:'#e8f4fd',numC:'#007aff',icon:'🏖️',iconC:'#007aff',lbl:'有給',lblC:'#007aff'};
     if(status==='s')return{bg:'#fff3e0',numC:'#cc6600',icon:'☀️',iconC:'#ff9500',lbl:'夏休',lblC:'#cc6600'};
     if(status==='a')return{bg:'#e8eaf6',numC:'#283593',icon:'📍',iconC:'#3949ab',lbl:'大阪',lblC:'#283593'};
     if(status==='e')return{bg:'#fce4ec',numC:'#880E4F',icon:'🏪',iconC:'#ad1457',lbl:'東',lblC:'#880E4F'};
     if(status==='t')return{bg:'#eceff1',numC:'#37474F',icon:'📍',iconC:'#546e7a',lbl:'東京',lblC:'#37474F'};
     if(status==='k')return{bg:'#e0f2f1',numC:'#00695C',icon:'🌍',iconC:'#00897b',lbl:'海外',lblC:'#00695C'};
-    return{bg:'#f0f0f5',numC:'#c7c7cc',icon:'🏠',iconC:'#d1d1d6',lbl:'休日',lblC:'#8e8e93',lblBg:'#e5e5ea',lblTxt:'#8e8e93'};
+    return{bg:'#f2f2f7',numC:'#c7c7cc',icon:'🏠',iconC:'#c7c7cc',lbl:'休日',lblC:'#c7c7cc',lblBg:'#e5e5ea',lblTxt:'#8e8e93'};
   }
   function lblStyle(cs){
     // 休日・祝日系は暗色テキスト、その他は白テキスト
@@ -671,10 +671,15 @@ function renderMyShift(){
     var todayLblBg=isToday?'#0F6E56':lbs.bg;
     var todayLblTxt=isToday?'#fff':lbs.txt;
     var tsHtml=tsDay.length>0?'<div style="font-size:7px;background:#6A1B9A;color:#fff;padding:1px 2px;border-radius:3px;line-height:1.4;margin-top:1px;overflow:hidden;white-space:nowrap;max-width:100%">🎪'+escTs(tsDay[0].nm||'TS')+'</div>':'';
-    html+='<div style="border-radius:8px;background:'+cs.bg+';min-height:58px;display:flex;flex-direction:column;align-items:center;padding:4px 2px 4px;gap:1px;'+todayStyle+'">'+
-      '<span style="font-size:10px;font-weight:'+(isToday?'700':'500')+';color:'+numColor+';line-height:1">'+day+'</span>'+
-      '<span style="font-size:16px;line-height:1;flex:1;display:flex;align-items:center;justify-content:center">'+cs.icon+'</span>'+
-      '<span style="font-size:7px;color:'+todayLblTxt+';font-weight:500;background:'+todayLblBg+';border-radius:4px;padding:1px 3px;line-height:1.4;white-space:nowrap">'+todayLbl+'</span>'+
+    var isWork=status==='w'||status==='a'||status==='e'||status==='t'||status==='k';
+    var solidBg=(isWork&&!hw)?cs.iconC:'';
+    var cellBgFinal=solidBg||cs.bg;
+    var numColorFinal=solidBg?'rgba(255,255,255,.8)':numColor;
+    var lblColorFinal=solidBg?'#fff':(hw?cs.iconC:(isWork?cs.iconC:((status==='p'||status==='s')?cs.iconC:'#aaa')));
+    var todayBorder=isToday?'box-shadow:0 0 0 2.5px #0F6E56 inset;':'';
+    html+='<div style="border-radius:8px;background:'+cellBgFinal+';min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5px 2px 5px;'+todayBorder+'">'+
+      '<span style="font-size:10px;font-weight:'+(isToday?'700':'500')+';color:'+numColorFinal+';line-height:1">'+day+'</span>'+
+      '<span style="font-size:12px;font-weight:800;color:'+lblColorFinal+';line-height:1;text-align:center;letter-spacing:-.5px">'+todayLbl+'</span>'+
       tsHtml+
     '</div>';
   }
