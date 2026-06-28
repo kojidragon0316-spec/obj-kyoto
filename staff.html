@@ -41,12 +41,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .sc.sun-c .sd{color:#ff3b30}.sc.sat-c .sd{color:#007aff}
 .sc.today-c{box-shadow:0 0 0 2px #007aff inset}
 /* 全員シフトセル */
-.tc{border-radius:6px;padding:3px 2px;min-height:64px;background:#f9f9fb;display:flex;flex-direction:column;gap:1px}
+.tc{border-radius:6px;padding:4px 3px;min-height:72px;background:#f9f9fb;display:flex;flex-direction:column;gap:2px}
 .tc.empty{background:transparent}
 .tc.hwday{background:#fff5f5}
-.tc .td{font-size:9px;font-weight:500;color:#8e8e93;margin-bottom:1px;line-height:1}
+.tc .td{font-size:11px;font-weight:600;color:#8e8e93;margin-bottom:2px;line-height:1}
 .tc.sun-c .td{color:#ff3b30}.tc.sat-c .td{color:#007aff}.tc.hwday .td{color:#ff3b30}
-.chip-s{font-size:8px;padding:1px 3px;border-radius:3px;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.chip-s{font-size:10px;padding:2px 4px;border-radius:3px;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .chip-off{font-size:7px;color:#c7c7cc;padding:0 1px}
 /* 希望休セル */
 .wc{border-radius:8px;padding:3px 2px;min-height:50px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:1.5px solid transparent}
@@ -116,7 +116,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .toast.show{opacity:1}
 /* トランクショー */
 .sc-ts{font-size:7px;background:#6A1B9A;color:#fff;padding:1px 3px;border-radius:3px;line-height:1.4;margin-top:1px;font-weight:700;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%}
-.tc-ts{font-size:7px;background:#6A1B9A;color:#fff;padding:1px 3px;border-radius:3px;line-height:1.4;font-weight:700;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.tc-ts{font-size:9px;background:#6A1B9A;color:#fff;padding:2px 4px;border-radius:3px;line-height:1.4;font-weight:700;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 /* 超過バッジ */
 .excess-b{display:inline-block;background:#ff3b30;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px}
 .ok-b{display:inline-block;background:#34c759;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px}
@@ -126,10 +126,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .sc.away-tokyo{background:#37474F}.sc.away-tokyo .sd{color:#fff;font-weight:700}.sc.away-tokyo .ss{background:rgba(255,255,255,.25);color:#fff}
 .sc.away-overseas{background:#00695C}.sc.away-overseas .sd{color:#fff;font-weight:700}.sc.away-overseas .ss{background:rgba(255,255,255,.25);color:#fff}
 /* 全員ビュー 出張チップ */
-.chip-away-osaka{font-size:8px;padding:1px 3px;border-radius:3px;background:#283593;color:#fff;font-weight:700;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.chip-away-east{font-size:8px;padding:1px 3px;border-radius:3px;background:#880E4F;color:#fff;font-weight:700;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.chip-away-tokyo{font-size:8px;padding:1px 3px;border-radius:3px;background:#37474F;color:#fff;font-weight:700;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.chip-away-overseas{font-size:8px;padding:1px 3px;border-radius:3px;background:#00695C;color:#fff;font-weight:700;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.chip-away-osaka{font-size:10px;padding:2px 4px;border-radius:3px;background:#283593;color:#fff;font-weight:700;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.chip-away-east{font-size:10px;padding:2px 4px;border-radius:3px;background:#880E4F;color:#fff;font-weight:700;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.chip-away-tokyo{font-size:10px;padding:2px 4px;border-radius:3px;background:#37474F;color:#fff;font-weight:700;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.chip-away-overseas{font-size:10px;padding:2px 4px;border-radius:3px;background:#00695C;color:#fff;font-weight:700;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -665,14 +665,20 @@ function renderMyShift(){
     if(cs.isWork)cellBg=cs.stBg; // 出勤系はベタ塗り
     // 祝日バッジ（出勤/休日の上に重ねる小バッジ）
     var hwBadge=hw?'<span style="font-size:7px;background:#ff9500;color:#fff;border-radius:3px;padding:0 3px;line-height:1.5;position:absolute;top:2px;right:2px">祝</span>':'';
-    // メインラベル
+    // セル背景・アイコン・ラベル
+    var isWork=status==='w'||status==='a'||status==='e'||status==='t'||status==='k';
+    var cellBgFinal=isWork?'#0F6E56':(status==='p'?'#EBF5FF':status==='s'?'#FFF3E0':status==='a'?'#E8EAF6':status==='t'?'#ECEFF1':status==='k'?'#E0F2F1':'#F2F2F7');
+    if(hw&&!isWork)cellBgFinal='#FFF3E0';
+    var centerIcon=isWork?'✅':(status==='p'?'🏖️':(status==='s'?'☀️':'❌'));
     var mainLbl=isToday?'今日':cs.stLbl;
-    var mainLblColor=cs.stBg?'#fff':(cs.isWork?cs.stColor:status==='p'?'#007aff':status==='s'?'#cc6600':'#b0b0bc');
+    var mainLblColor=isWork?'rgba(255,255,255,0.9)':(status==='p'?'#007aff':status==='s'?'#cc6600':status==='a'?'#283593':status==='t'?'#37474F':status==='k'?'#00695C':'#B8B8C0');
     var todayBorder=isToday?'box-shadow:0 0 0 2.5px #0F6E56 inset;':'';
-    html+='<div style="position:relative;border-radius:8px;background:'+cellBg+';min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5px 2px 5px;'+todayBorder+'">'+
+    var numColorFinal=isWork?'rgba(255,255,255,.85)':numColor;
+    html+='<div style="position:relative;border-radius:8px;background:'+cellBgFinal+';min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5px 2px 5px;'+todayBorder+'">'+
       hwBadge+
-      '<span style="font-size:10px;font-weight:'+(isToday?'700':'500')+';color:'+(cs.stBg?'rgba(255,255,255,.8)':numColor)+';line-height:1">'+day+'</span>'+
-      '<span style="font-size:12px;font-weight:800;color:'+mainLblColor+';line-height:1;text-align:center;letter-spacing:-.3px">'+mainLbl+'</span>'+
+      '<span style="font-size:10px;font-weight:'+(isToday?'700':'500')+';color:'+numColorFinal+';line-height:1">'+day+'</span>'+
+      '<span style="font-size:20px;line-height:1">'+centerIcon+'</span>'+
+      '<span style="font-size:10px;font-weight:700;color:'+mainLblColor+';line-height:1;text-align:center">'+mainLbl+'</span>'+
       tsHtml+
     '</div>';
   }
