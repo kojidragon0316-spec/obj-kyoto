@@ -7,6 +7,12 @@
 <style>:root{color-scheme:light only}</style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <title>OBJ スタッフ</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OBJ Shift">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#303A74">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:#f5f5f7;color:#1d1d1f;font-size:15px}
@@ -222,7 +228,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
       <!-- 全員ビュー -->
       <div id="view-all" style="display:none">
         <div style="padding:8px 14px 6px;display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:11px;color:#8e8e93" id="all-legend"></div>
+          <div style="font-size:13px;color:#8e8e93;line-height:1.8" id="all-legend"></div>
           <div style="display:flex;background:#f0f0f5;border-radius:8px;padding:2px;gap:2px;flex-shrink:0">
             <button id="all-vt-list" onclick="setAllView('list')" style="padding:4px 10px;border-radius:6px;font-size:10px;color:#303A74;font-weight:600;background:#fff;border:none;cursor:pointer;font-family:inherit;box-shadow:0 1px 2px rgba(0,0,0,.1)">リスト</button>
             <button id="all-vt-cal" onclick="setAllView('cal')" style="padding:4px 10px;border-radius:6px;font-size:10px;color:#8e8e93;background:transparent;border:none;cursor:pointer;font-family:inherit">カレンダー</button>
@@ -244,6 +250,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
         <div style="font-size:12px;font-weight:700;color:#7b1fa2">🎪 今月のトランクショー</div>
       </div>
       <div id="ts-summary-list" style="padding:8px 14px"></div>
+    </div>
+    <!-- カレンダー取り込みボタン -->
+    <div style="margin-top:8px;padding:0 2px">
+      <button onclick="exportShiftICS()" style="width:100%;background:#fff;border:1.5px solid #0F6E56;border-radius:14px;padding:14px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-family:inherit">
+        <span style="font-size:20px">📅</span>
+        <div style="text-align:left">
+          <div style="font-size:14px;font-weight:700;color:#0F6E56">カレンダーに追加</div>
+          <div style="font-size:10px;color:#8e8e93;margin-top:1px">出勤日をスマホのカレンダーに取り込む</div>
+        </div>
+      </button>
+      <div id="ics-msg" style="font-size:11px;color:#34c759;text-align:center;margin-top:6px;min-height:16px"></div>
     </div>
     <div class="imp-area" style="margin-top:8px">
       <p>📲 新しいシフトコードで更新</p>
@@ -734,8 +751,8 @@ function renderAllShift(){
   var legHtml='';
   shiftData.s.forEach(function(s){
     var isMine=(s.nm||s.name)===staffName;
-    legHtml+='<span style="display:inline-flex;align-items:center;gap:3px;font-size:9px;margin-right:6px'+(isMine?';font-weight:700':'')+'">'+
-      '<span style="width:7px;height:7px;border-radius:50%;background:'+(s.cl||s.color||'#999')+'"></span>'+(s.nm||s.name)+(isMine?' ✦':'')+'</span>';
+    legHtml+='<span style="display:inline-flex;align-items:center;gap:4px;font-size:13px;margin-right:10px'+(isMine?';font-weight:700':'')+'">'+
+      '<span style="width:10px;height:10px;border-radius:50%;background:'+(s.cl||s.color||'#999')+';flex-shrink:0"></span>'+(s.nm||s.name)+(isMine?' ✦':'')+'</span>';
   });
   document.getElementById('all-legend').innerHTML=legHtml;
 
@@ -1154,6 +1171,77 @@ function fallback(text,msg){
   try{document.execCommand('copy');showToast(msg);}catch(e){prompt('コードをコピーして送ってください:',text);}
   document.body.removeChild(ta);
 }
+function exportShiftICS(){
+  if(!shiftData){
+    document.getElementById('ics-msg').textContent='⚠ シフトデータがありません';
+    return;
+  }
+  var ym=getShiftYM();var y=ym.y,m=ym.m;
+  var nd=ndays(y,m);
+  // 自分のシフトデータを取得
+  var myStaff=null;
+  if(shiftData.v===3&&staffName){
+    shiftData.s.forEach(function(s){if((s.nm||s.name)===staffName)myStaff=s;});
+  }
+  var days=myStaff?myStaff.d:(shiftData.v===2?shiftData.days:null);
+  if(!days){
+    document.getElementById('ics-msg').textContent='⚠ 自分のシフトが見つかりません（名前を選択してください）';
+    setTimeout(function(){document.getElementById('ics-msg').textContent='';},3000);
+    return;
+  }
+
+  function pad(n){return n<10?'0'+n:String(n);}
+  function icsDate(y,m,d){return y+pad(m+1)+pad(d);}
+  function uid(){return 'obj-'+y+pad(m+1)+'-'+Math.random().toString(36).slice(2)+'@obj-kyoto';}
+  var ts=shiftData.ts||[];
+
+  var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//OBJ Kyoto//Shift//JP',
+    'CALSCALE:GREGORIAN','METHOD:PUBLISH',
+    'X-WR-CALNAME:OBJ京都 シフト '+y+'年'+(m+1)+'月',
+    'X-WR-TIMEZONE:Asia/Tokyo','X-WR-CALDESC:OBJ京都店 シフトカレンダー'];
+
+  var statusLabel={w:'出勤',p:'有給休暇',s:'夏季休暇',a:'出勤（大阪）',e:'出勤（イースト）',t:'出勤（東京）',k:'出勤（海外）',o:'休日'};
+
+  for(var day=1;day<=nd;day++){
+    var st=typeof days==='string'?days[day-1]:(days[String(day)]||'o');
+    var hw=isHW(y,m,day);
+    var hname=holNm(y,m,day);
+    var tsDay=ts.filter(function(t){return t.d===day;});
+
+    // 出勤日・有給・夏休のみ登録（休日はスキップ）
+    if(st==='o'&&!hw)continue;
+    if(st==='o'&&hw)continue; // 祝日休みもスキップ
+
+    var lbl=statusLabel[st]||'出勤';
+    var summary='OBJ京都 '+lbl;
+    if(tsDay.length>0)summary+=' 🎪'+escTs(tsDay[0].nm||'TS');
+    if(hw&&hname)summary+='（'+hname+'）';
+
+    var dtStart=icsDate(y,m,day);
+    // 翌日（終日イベントのDTEND）
+    var nextDay=new Date(y,m,day);
+    nextDay.setDate(nextDay.getDate()+1);
+    var dtEnd=nextDay.getFullYear()+pad(nextDay.getMonth()+1)+pad(nextDay.getDate());
+
+    lines.push('BEGIN:VEVENT');
+    lines.push('UID:'+uid());
+    lines.push('DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z');
+    lines.push('DTSTART;VALUE=DATE:'+dtStart);
+    lines.push('DTEND;VALUE=DATE:'+dtEnd);
+    lines.push('SUMMARY:'+summary);
+    lines.push('DESCRIPTION:'+lbl+(hw&&hname?' / '+hname:''));
+    lines.push('END:VEVENT');
+  }
+  lines.push('END:VCALENDAR');
+
+  var fname='obj_shift_'+(staffName||'staff')+'_'+y+'_'+pad(m+1)+'.ics';
+  dlFile(lines.join('
+'),fname,'text/calendar;charset=utf-8');
+  var msg=document.getElementById('ics-msg');
+  msg.textContent='✓ .icsファイルをダウンロードしました。タップして開いてください';
+  setTimeout(function(){msg.textContent='';},4000);
+}
+
 function dlFile(content,fname,type){
   var blob=new Blob([content],{type:type});var url=URL.createObjectURL(blob);
   var a=document.createElement('a');a.href=url;a.download=fname;
@@ -1218,6 +1306,15 @@ buildNameBar();
 loadSave();
 buildNameBar(); // 名前復元後に再描画
 renderWishCal();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js')
+      .then(function(r){console.log('SW registered');})
+      .catch(function(e){console.log('SW error:',e);});
+  });
+}
 </script>
 </body>
 </html>

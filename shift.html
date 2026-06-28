@@ -6,6 +6,12 @@
 <meta name="color-scheme" content="light only">
 <style>:root{color-scheme:light only}</style>
 <title>OBJ シフト管理</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OBJ Shift">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#303A74">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:linear-gradient(160deg,#C8D5FF 0%,#E4EAFF 45%,#F0F4FF 100%);min-height:100vh;color:#1d1d1f;font-size:15px}
@@ -4430,6 +4436,15 @@ try {
 } catch(initErr){
   console.error('Initialization error:', initErr.message, initErr.stack);
   try { renderCal(); } catch(e2){}
+}
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js')
+      .then(function(r){console.log('SW registered');})
+      .catch(function(e){console.log('SW error:',e);});
+  });
 }
 </script>
 </body>

@@ -1,0 +1,38 @@
+{
+  "name": "OBJ シフト管理",
+  "short_name": "OBJ Shift",
+  "description": "OBJ京都店 シフト管理・スタッフ確認アプリ",
+  "start_url": "/obj-kyoto/shift.html",
+  "scope": "/obj-kyoto/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#303A74",
+  "theme_color": "#303A74",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "シフト管理",
+      "url": "/obj-kyoto/shift.html",
+      "description": "シフトの作成・管理"
+    },
+    {
+      "name": "スタッフ確認",
+      "url": "/obj-kyoto/staff.html",
+      "description": "自分のシフト確認"
+    }
+  ]
+}
