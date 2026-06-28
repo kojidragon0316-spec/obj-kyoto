@@ -27,7 +27,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .dow-row{display:grid;grid-template-columns:repeat(7,1fr);padding:0 10px 3px}
 .dow-row div{text-align:center;font-size:10px;color:#8e8e93;font-weight:500;padding:2px 0}
 .dow-row .s{color:#ff3b30}.dow-row .sa{color:#007aff}
-.cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:0 10px 10px}
+.cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:0 10px 10px}
 /* 自分シフトセル */
 .sc{border-radius:8px;padding:4px 2px 3px;min-height:52px;display:flex;flex-direction:column;align-items:center;gap:1px}
 .sc.empty{background:transparent}
@@ -41,13 +41,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .sc.sun-c .sd{color:#ff3b30}.sc.sat-c .sd{color:#007aff}
 .sc.today-c{box-shadow:0 0 0 2px #007aff inset}
 /* 全員シフトセル */
-.tc{border-radius:6px;padding:4px 3px 3px;background:#f9f9fb;display:flex;flex-direction:column;gap:0}
+.tc{border-radius:6px;padding:6px 4px 4px;background:#f9f9fb;display:flex;flex-direction:column;gap:0}
 .tc.empty{background:transparent}
 .tc.hwday{background:#fff8f0}
-.tc .td{font-size:11px;font-weight:600;color:#8e8e93;margin-bottom:3px;line-height:1;display:flex;align-items:center;gap:2px}
+.tc .td{font-size:14px;font-weight:700;color:#8e8e93;margin-bottom:4px;line-height:1;display:flex;align-items:center;gap:3px}
 .tc.sun-c .td{color:#ff3b30}.tc.sat-c .td{color:#007aff}.tc.hwday .td{color:#ff6600}
-.tc-chips{display:flex;flex-wrap:wrap;gap:2px;align-content:flex-start}
-.chip-s{font-size:9px;padding:1px 4px;border-radius:10px;line-height:1.5;font-weight:600;white-space:nowrap}
+.tc-chips{display:flex;flex-wrap:wrap;gap:3px;align-content:flex-start}
+.chip-s{font-size:12px;padding:2px 6px;border-radius:10px;line-height:1.5;font-weight:600;white-space:nowrap}
 .chip-off{font-size:7px;color:#c7c7cc;padding:0 1px}
 /* 希望休セル */
 .wc{border-radius:8px;padding:3px 2px;min-height:50px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:1.5px solid transparent}
@@ -117,7 +117,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .toast.show{opacity:1}
 /* トランクショー */
 .sc-ts{font-size:7px;background:#6A1B9A;color:#fff;padding:1px 3px;border-radius:3px;line-height:1.4;margin-top:1px;font-weight:700;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%}
-.tc-ts{font-size:8px;background:#6A1B9A;color:#fff;padding:1px 4px;border-radius:10px;line-height:1.5;font-weight:600;white-space:nowrap}
+.tc-ts{font-size:11px;background:#6A1B9A;color:#fff;padding:2px 6px;border-radius:10px;line-height:1.5;font-weight:600;white-space:nowrap}
 /* 超過バッジ */
 .excess-b{display:inline-block;background:#ff3b30;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px}
 .ok-b{display:inline-block;background:#34c759;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px}
@@ -127,10 +127,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .sc.away-tokyo{background:#37474F}.sc.away-tokyo .sd{color:#fff;font-weight:700}.sc.away-tokyo .ss{background:rgba(255,255,255,.25);color:#fff}
 .sc.away-overseas{background:#00695C}.sc.away-overseas .sd{color:#fff;font-weight:700}.sc.away-overseas .ss{background:rgba(255,255,255,.25);color:#fff}
 /* 全員ビュー 出張チップ */
-.chip-away-osaka{font-size:9px;padding:1px 4px;border-radius:10px;background:#283593;color:#fff;font-weight:600;line-height:1.5;white-space:nowrap}
-.chip-away-east{font-size:9px;padding:1px 4px;border-radius:10px;background:#880E4F;color:#fff;font-weight:600;line-height:1.5;white-space:nowrap}
-.chip-away-tokyo{font-size:9px;padding:1px 4px;border-radius:10px;background:#37474F;color:#fff;font-weight:600;line-height:1.5;white-space:nowrap}
-.chip-away-overseas{font-size:9px;padding:1px 4px;border-radius:10px;background:#00695C;color:#fff;font-weight:600;line-height:1.5;white-space:nowrap}
+.chip-away-osaka{font-size:12px;padding:2px 6px;border-radius:10px;background:#283593;color:#fff;font-weight:600;line-height:1.5;white-space:nowrap}
+.chip-away-east{font-size:12px;padding:2px 6px;border-radius:10px;background:#880E4F;color:#fff;font-weight:600;line-height:1.5;white-space:nowrap}
+.chip-away-tokyo{font-size:12px;padding:2px 6px;border-radius:10px;background:#37474F;color:#fff;font-weight:600;line-height:1.5;white-space:nowrap}
+.chip-away-overseas{font-size:12px;padding:2px 6px;border-radius:10px;background:#00695C;color:#fff;font-weight:600;line-height:1.5;white-space:nowrap}
 </style>
 </head>
 <body>
