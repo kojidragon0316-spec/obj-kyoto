@@ -138,6 +138,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
 .chip-away-tokyo{font-size:12px;padding:2px 6px;border-radius:10px;background:#37474F;color:#fff;font-weight:600;line-height:1.5;white-space:nowrap}
 .chip-away-overseas{font-size:12px;padding:2px 6px;border-radius:10px;background:#00695C;color:#fff;font-weight:600;line-height:1.5;white-space:nowrap}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
 <body>
 <div class="app-hdr">
@@ -182,6 +184,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
         <button class="imp-btn" onclick="loadShift()">読込</button>
       </div>
       <div class="imp-msg" id="shift-msg"></div>
+      <!-- QR画像読み込み -->
+      <div style="margin-top:10px;text-align:center;position:relative">
+        <div style="font-size:11px;color:#8e8e93;margin-bottom:6px">または</div>
+        <button onclick="document.getElementById('qr-file-input').click()" style="width:100%;padding:12px;border-radius:10px;font-size:14px;cursor:pointer;border:1.5px solid #303A74;background:#fff;color:#303A74;font-weight:600;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
+          <span style="font-size:18px">📷</span> QR画像を読み込む
+        </button>
+        <input type="file" id="qr-file-input" accept="image/*" style="display:none" onchange="readQRImage(this)">
+        <div style="font-size:10px;color:#8e8e93;margin-top:5px">LINEで受け取ったQR画像を選択してください</div>
+        <div class="imp-msg" id="qr-msg"></div>
+      </div>
     </div>
   </div>
 
@@ -492,7 +504,14 @@ function setView(v){
 // ===== シフト読込 =====
 function parseShiftCode(raw){
   try{
-    var data=JSON.parse(decodeURIComponent(atob(raw.trim())));
+    var t=raw.trim();
+    // LZ圧縮コード（接頭辞 L:）対応
+    if(t.indexOf('L:')===0&&typeof LZString!=='undefined'){
+      var json=LZString.decompressFromEncodedURIComponent(t.substring(2));
+      return JSON.parse(json);
+    }
+    // 従来のBase64コード
+    var data=JSON.parse(decodeURIComponent(atob(t)));
     // v:3 (全員) or v:2 (個人) 両対応
     return data;
   }catch(e){return null;}
@@ -520,6 +539,45 @@ function applyShiftCode(raw,msgId){
 }
 function loadShift(){applyShiftCode(document.getElementById('shift-in').value,'shift-msg');document.getElementById('shift-in').value='';}
 function loadShift2(){applyShiftCode(document.getElementById('shift-in2').value,'shift-msg2');document.getElementById('shift-in2').value='';}
+
+// ===== QR画像読み取り =====
+function readQRImage(input){
+  var msgEl=document.getElementById('qr-msg');
+  function showMsg(txt,color){if(msgEl){msgEl.textContent=txt;msgEl.style.color=color;}}
+  if(typeof jsQR==='undefined'){showMsg('⚠ QR読み取りライブラリの読み込み中です。少し待って再度お試しください','#cc0000');return;}
+  var file=input.files&&input.files[0];
+  if(!file){return;}
+  showMsg('読み取り中...','#8e8e93');
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      // canvasに描画してピクセルデータ取得
+      var canvas=document.createElement('canvas');
+      // 大きすぎる画像は縮小（読み取り精度と速度のバランス）
+      var maxDim=1000;
+      var scale=Math.min(1,maxDim/Math.max(img.width,img.height));
+      canvas.width=Math.round(img.width*scale);
+      canvas.height=Math.round(img.height*scale);
+      var ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      var imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+      var result=jsQR(imgData.data,canvas.width,canvas.height,{inversionAttempts:'attemptBoth'});
+      if(result&&result.data){
+        var ok=applyShiftCode(result.data,'qr-msg');
+        if(ok){showMsg('✓ QRコードを読み取りました','#34c759');}
+        else{showMsg('⚠ QRは読めましたが、シフトコードではありませんでした','#cc0000');}
+      }else{
+        showMsg('⚠ QRコードを認識できませんでした。画像が鮮明か確認してください','#cc0000');
+      }
+      input.value=''; // 同じファイルを再選択できるようリセット
+    };
+    img.onerror=function(){showMsg('⚠ 画像を読み込めませんでした','#cc0000');input.value='';};
+    img.src=e.target.result;
+  };
+  reader.onerror=function(){showMsg('⚠ ファイルを読み込めませんでした','#cc0000');};
+  reader.readAsDataURL(file);
+}
 
 function renderShiftLoaded(){
   if(!shiftData){return;}
