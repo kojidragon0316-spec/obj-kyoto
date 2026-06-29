@@ -1,4 +1,4 @@
-const CACHE_NAME = 'obj-shift-v1';
+const CACHE_NAME = 'obj-shift-v2';
 const CACHE_FILES = [
   '/obj-kyoto/shift.html',
   '/obj-kyoto/staff.html',

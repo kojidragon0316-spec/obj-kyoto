@@ -1235,8 +1235,7 @@ function exportShiftICS(){
   lines.push('END:VCALENDAR');
 
   var fname='obj_shift_'+(staffName||'staff')+'_'+y+'_'+pad(m+1)+'.ics';
-  dlFile(lines.join('
-'),fname,'text/calendar;charset=utf-8');
+  dlFile(lines.join('\r\n'),fname,'text/calendar;charset=utf-8');
   var msg=document.getElementById('ics-msg');
   msg.textContent='✓ .icsファイルをダウンロードしました。タップして開いてください';
   setTimeout(function(){msg.textContent='';},4000);
