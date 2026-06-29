@@ -226,6 +226,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
           <div class="leg"><div class="ldot" style="background:#37474F"></div>→東京</div>
           <div class="leg"><div class="ldot" style="background:#00695C"></div>→海外</div>
         </div>
+        <!-- 年間集計 -->
+        <div id="year-summary" style="margin:4px 10px 12px;padding:14px;background:#f7f8fc;border-radius:14px;display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:700;color:#303A74" id="ys-title">年間集計</div>
+            <div style="font-size:10px;color:#8e8e93" id="ys-range"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div style="background:#fff;border-radius:10px;padding:10px;text-align:center">
+              <div style="font-size:22px;font-weight:800;color:#0F6E56" id="ys-work">—</div>
+              <div style="font-size:10px;color:#8e8e93;margin-top:2px">累計出勤</div>
+            </div>
+            <div style="background:#fff;border-radius:10px;padding:10px;text-align:center">
+              <div style="font-size:22px;font-weight:800;color:#8e8e93" id="ys-off">—</div>
+              <div style="font-size:10px;color:#8e8e93;margin-top:2px">累計休日</div>
+            </div>
+            <div style="background:#fff;border-radius:10px;padding:10px;text-align:center">
+              <div style="font-size:22px;font-weight:800;color:#007aff" id="ys-paid">—</div>
+              <div style="font-size:10px;color:#8e8e93;margin-top:2px">有給取得</div>
+            </div>
+            <div style="background:#fff;border-radius:10px;padding:10px;text-align:center">
+              <div style="font-size:22px;font-weight:800;color:#cc6600" id="ys-summer">—</div>
+              <div style="font-size:10px;color:#8e8e93;margin-top:2px">夏季休暇</div>
+            </div>
+          </div>
+          <div id="ys-months" style="margin-top:10px"></div>
+        </div>
       </div>
       <!-- 全員ビュー -->
       <div id="view-all" style="display:none">
@@ -783,9 +809,75 @@ function renderMyShift(){
 
   // TSサマリー
   renderTSSummary(ts);
+  // 年間集計
+  renderYearSummary();
 }
 
-var allViewMode='list';
+// ===== 年間集計（蓄積された全月を合算）=====
+function renderYearSummary(){
+  var box=document.getElementById('year-summary');
+  if(!box)return;
+  var keys=Object.keys(shiftHistory);
+  // 蓄積が1ヶ月以下なら非表示
+  if(keys.length<=1||!staffName){box.style.display='none';return;}
+  box.style.display='';
+
+  // 各月を集計
+  function countMonth(data){
+    var dy,dm;
+    if(data.v===3){dy=data.y;dm=data.m-1;}
+    else{dy=data.year||data.y;dm=(data.month||data.m||1)-1;}
+    // この月の自分のシフト配列を取得
+    var mdays=null;
+    if(data.v===3&&staffName){
+      data.s.forEach(function(s){if((s.nm||s.name)===staffName)mdays=s.d;});
+    }else if(data.v===2){mdays=data.days;}
+    if(!mdays)return null;
+    var nd=ndays(dy,dm);
+    var w=0,o=0,p=0,sm=0;
+    for(var d=1;d<=nd;d++){
+      var st=typeof mdays==='string'?mdays[d-1]:(mdays[String(d)]||'o');
+      var isW=st==='w'||st==='a'||st==='e'||st==='t'||st==='k';
+      if(isW)w++;
+      else if(st==='p'){p++;o++;}
+      else if(st==='s'){sm++;o++;}
+      else o++;
+    }
+    return{y:dy,m:dm,w:w,o:o,p:p,s:sm};
+  }
+
+  // 時系列順にソート
+  var sorted=keys.slice().sort(function(a,b){
+    var pa=a.split('-'),pb=b.split('-');
+    return (parseInt(pa[0])*12+parseInt(pa[1]))-(parseInt(pb[0])*12+parseInt(pb[1]));
+  });
+
+  var totW=0,totO=0,totP=0,totS=0;
+  var monthRows='';
+  var firstLbl='',lastLbl='';
+  sorted.forEach(function(k,i){
+    var c=countMonth(shiftHistory[k]);
+    if(!c)return;
+    totW+=c.w;totO+=c.o;totP+=c.p;totS+=c.s;
+    var lbl=(c.m+1)+'月';
+    if(i===0)firstLbl=c.y+'年'+(c.m+1)+'月';
+    lastLbl=c.y+'年'+(c.m+1)+'月';
+    // 現在表示中の月をハイライト
+    var isCur=(k===viewingKey);
+    monthRows+='<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:8px;'+(isCur?'background:#e8eaf6;':'')+'font-size:11px">'+
+      '<span style="font-weight:'+(isCur?'700':'500')+';color:'+(isCur?'#303A74':'#1d1d1f')+'">'+c.y+'年'+lbl+'</span>'+
+      '<span style="color:#8e8e93">出勤<b style="color:#0F6E56">'+c.w+'</b> / 休<b style="color:#8e8e93">'+c.o+'</b>'+(c.p>0?' / 有<b style="color:#007aff">'+c.p+'</b>':'')+(c.s>0?' / 夏<b style="color:#cc6600">'+c.s+'</b>':'')+'</span>'+
+    '</div>';
+  });
+
+  document.getElementById('ys-work').textContent=totW;
+  document.getElementById('ys-off').textContent=totO;
+  document.getElementById('ys-paid').textContent=totP;
+  document.getElementById('ys-summer').textContent=totS;
+  document.getElementById('ys-range').textContent=firstLbl+' 〜 '+lastLbl;
+  document.getElementById('ys-title').textContent=staffName+'さんの累計（'+sorted.length+'ヶ月分）';
+  document.getElementById('ys-months').innerHTML=monthRows;
+}
 function setAllView(mode){
   allViewMode=mode;
   var isList=mode==='list';
