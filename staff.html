@@ -193,7 +193,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;ba
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 4px">
         <div style="flex:1">
           <div style="display:flex;align-items:center;gap:8px">
+            <button onclick="changeShiftMonth(-1)" id="sm-prev" style="font-size:16px;color:#303A74;background:none;border:0.5px solid #d1d1d6;border-radius:8px;width:28px;height:28px;cursor:pointer;font-family:inherit;flex-shrink:0;display:flex;align-items:center;justify-content:center">‹</button>
             <div style="font-size:15px;font-weight:700" id="shift-month-lbl"></div>
+            <button onclick="changeShiftMonth(1)" id="sm-next" style="font-size:16px;color:#303A74;background:none;border:0.5px solid #d1d1d6;border-radius:8px;width:28px;height:28px;cursor:pointer;font-family:inherit;flex-shrink:0;display:flex;align-items:center;justify-content:center">›</button>
             <button onclick="clearSave()" style="font-size:10px;color:#8e8e93;background:none;border:0.5px solid #d1d1d6;border-radius:8px;padding:3px 8px;cursor:pointer;font-family:inherit;flex-shrink:0">クリア</button>
           </div>
           <div style="font-size:11px;color:#8e8e93;margin-top:2px" id="shift-sub-lbl"></div>
@@ -412,7 +414,9 @@ var today=new Date();
 
 // 状態
 var staffName='';
-var shiftData=null;   // v:3 decoded
+var shiftData=null;   // v:3 decoded（現在表示中の月）
+var shiftHistory={};  // 月ごとのシフト蓄積 { "2026-7": {...}, "2026-6": {...} }
+var viewingKey='';    // 現在表示中の年月キー
 var currentView='mine';
 var wishType='normal';
 var wishYear=today.getMonth()===11?today.getFullYear()+1:today.getFullYear();
@@ -471,6 +475,13 @@ function parseShiftCode(raw){
 function applyShiftCode(raw,msgId){
   var d=parseShiftCode(raw);
   if(!d){document.getElementById(msgId).textContent='⚠ コードが正しくありません';document.getElementById(msgId).style.color='#cc0000';return false;}
+  // 年月キーを算出して履歴に蓄積
+  var ky,km;
+  if(d.v===3){ky=d.y;km=d.m;}
+  else{ky=d.year||d.y;km=d.month||d.m||1;}
+  var key=ky+'-'+km;
+  shiftHistory[key]=d;
+  viewingKey=key;
   shiftData=d;
   // 名前が含まれていたら自動選択
   if(d.v===2&&d.name&&!staffName){staffName=d.name;buildNameBar();}
@@ -493,9 +504,46 @@ function renderShiftLoaded(){
   else{y=shiftData.year||shiftData.y;m=(shiftData.month||shiftData.m||1)-1;}
   document.getElementById('shift-month-lbl').textContent=y+'年'+(m+1)+'月 シフト';
   document.getElementById('shift-sub-lbl').textContent=shiftData.v===3?'全スタッフ分':(shiftData.name||staffName||'')+'さんのシフト';
+  updateMonthNav();
   renderTodayCard();
   renderMyShift();
   renderAllShift();
+}
+
+// 蓄積された月のキー一覧を時系列順（古い→新しい）で返す
+function sortedMonthKeys(){
+  return Object.keys(shiftHistory).sort(function(a,b){
+    var pa=a.split('-'),pb=b.split('-');
+    return (parseInt(pa[0])*12+parseInt(pa[1]))-(parseInt(pb[0])*12+parseInt(pb[1]));
+  });
+}
+
+// 月送りボタンの有効/無効を更新
+function updateMonthNav(){
+  var keys=sortedMonthKeys();
+  var idx=keys.indexOf(viewingKey);
+  var prevBtn=document.getElementById('sm-prev');
+  var nextBtn=document.getElementById('sm-next');
+  if(!prevBtn||!nextBtn)return;
+  // 前の月（古い方）がなければ無効
+  var hasPrev=idx>0;
+  var hasNext=idx<keys.length-1&&idx>=0;
+  prevBtn.style.opacity=hasPrev?'1':'0.3';
+  prevBtn.style.pointerEvents=hasPrev?'auto':'none';
+  nextBtn.style.opacity=hasNext?'1':'0.3';
+  nextBtn.style.pointerEvents=hasNext?'auto':'none';
+}
+
+// 月を切り替え（dir: -1=過去, +1=未来）
+function changeShiftMonth(dir){
+  var keys=sortedMonthKeys();
+  var idx=keys.indexOf(viewingKey);
+  if(idx<0)return;
+  var newIdx=idx+dir;
+  if(newIdx<0||newIdx>=keys.length)return;
+  viewingKey=keys[newIdx];
+  shiftData=shiftHistory[viewingKey];
+  renderShiftLoaded();
 }
 
 // ===== 今日の状況カード（案A：週間バー型）=====
@@ -585,15 +633,17 @@ function renderTodayCard(){
     var inMonth=(cellDate.getFullYear()===y&&cellDate.getMonth()===m);
     var wdayD=cellDate.getDate();
     var wSt=inMonth?getStatus(wdayD):null;
-    var wHw=inMonth?isHW(y,m,wdayD):false;
+    var wHol=inMonth?isHol(y,m,wdayD):false; // 本当の祝日のみ
     var isToday=(cellDate.getFullYear()===td.getFullYear()&&cellDate.getMonth()===td.getMonth()&&cellDate.getDate()===td.getDate());
-    var wInfo=wSt?statusInfo(wSt,wHw):null;
-    var cellColor=!inMonth?'#eeeef2':(wHw?'#ffedd5':(wSt==='w'?'#dcf5e5':(wSt==='o'?'#e5e5ea':(wInfo?wInfo.bg:'#e5e5ea'))));
-    var cellText=!inMonth?'-':(wHw?'祝':(wSt==='w'?'出':(wSt==='o'?'休':(wSt==='p'?'有':(wSt==='s'?'夏':'他')))));
-    var cellTextColor=!inMonth?'#c7c7cc':(wHw?'#c2410c':(wSt==='w'?'#1a7f37':(wSt==='o'?'#8e8e93':'#555')));
+    // 出勤系判定
+    var wWork=wSt==='w'||wSt==='a'||wSt==='e'||wSt==='t'||wSt==='k';
+    // 表示はシフトステータス（出勤/休日）を最優先
+    var cellColor=!inMonth?'#eeeef2':(wWork?'#dcf5e5':(wSt==='o'?'#e5e5ea':(wSt==='p'?'#e8f4fd':(wSt==='s'?'#fff3e0':'#e5e5ea'))));
+    var cellText=!inMonth?'-':(wWork?'出':(wSt==='o'?'休':(wSt==='p'?'有':(wSt==='s'?'夏':'休'))));
+    var cellTextColor=!inMonth?'#c7c7cc':(wWork?'#1a7f37':(wSt==='o'?'#8e8e93':(wSt==='p'?'#007aff':(wSt==='s'?'#cc6600':'#8e8e93'))));
     weekHtml+='<div style="text-align:center">'+
       '<div style="font-size:9px;color:'+(wdActual===0?'#dc2626':wdActual===6?'#2563eb':'#8e8e93')+';margin-bottom:3px">'+wdLabel+'</div>'+
-      '<div style="height:38px;border-radius:8px;background:'+cellColor+';display:flex;align-items:center;justify-content:center;font-size:11px;color:'+cellTextColor+';font-weight:600;'+(isToday?'box-shadow:0 0 0 2px #0F6E56;':'')+'">'+cellText+'</div>'+
+      '<div style="position:relative;height:38px;border-radius:8px;background:'+cellColor+';display:flex;align-items:center;justify-content:center;font-size:11px;color:'+cellTextColor+';font-weight:600;'+(isToday?'box-shadow:0 0 0 2px #0F6E56;':'')+'">'+cellText+(wHol?'<span style="position:absolute;top:1px;right:2px;font-size:6px;color:#ff6600;font-weight:700">祝</span>':'')+'</div>'+
       '<div style="font-size:8px;color:#c7c7cc;margin-top:2px">'+(cellDate.getMonth()+1)+'/'+wdayD+'</div>'+
     '</div>';
   }
@@ -675,6 +725,7 @@ function renderMyShift(){
   for(var day=1;day<=nd;day++){
     var dow=(f+day-1)%7;
     var hw=isHW(y,m,day);
+    var hol=isHol(y,m,day); // 本当の祝日のみ
     var hname=holNm(y,m,day);
     var status=typeof days==='string'?days[day-1]:(days[String(day)]||'o');
     var isToday=today.getFullYear()===y&&today.getMonth()===m&&today.getDate()===day;
@@ -694,11 +745,11 @@ function renderMyShift(){
     var cellBg=cs.stBg||(!cs.isWork&&status==='p'?'#e8f4fd':!cs.isWork&&status==='s'?'#fff3e0':'#f2f2f7');
     if(cs.isWork)cellBg=cs.stBg; // 出勤系はベタ塗り
     // 祝日バッジ（出勤/休日の上に重ねる小バッジ）
-    var hwBadge=hw?'<span style="font-size:7px;background:#ff9500;color:#fff;border-radius:3px;padding:0 3px;line-height:1.5;position:absolute;top:2px;right:2px">祝</span>':'';
+    var hwBadge=hol?'<span style="font-size:7px;background:#ff9500;color:#fff;border-radius:3px;padding:0 3px;line-height:1.5;position:absolute;top:2px;right:2px">祝</span>':'';
     // セル背景・アイコン・ラベル
     var isWork=status==='w'||status==='a'||status==='e'||status==='t'||status==='k';
     var cellBgFinal=isWork?'#0F6E56':(status==='p'?'#EBF5FF':status==='s'?'#FFF3E0':status==='a'?'#E8EAF6':status==='t'?'#ECEFF1':status==='k'?'#E0F2F1':'#F2F2F7');
-    if(hw&&!isWork)cellBgFinal='#FFF3E0';
+    if(hol&&!isWork)cellBgFinal='#FFF3E0';
     var centerIcon=isWork?'✅':(status==='p'?'🏖️':(status==='s'?'☀️':'❌'));
     var mainLbl=isToday?'今日':cs.stLbl;
     var mainLblColor=isWork?'rgba(255,255,255,0.9)':(status==='p'?'#007aff':status==='s'?'#cc6600':status==='a'?'#283593':status==='t'?'#37474F':status==='k'?'#00695C':'#B8B8C0');
@@ -1268,6 +1319,8 @@ function autoSave(){
     var data={
       staffName:staffName,
       shiftData:shiftData,
+      shiftHistory:shiftHistory,
+      viewingKey:viewingKey,
       wishes:wishes,
       wishYear:wishYear,
       wishMonth:wishMonth,
@@ -1286,9 +1339,23 @@ function loadSave(){
     if(data.wishes){wishes=data.wishes;}
     if(data.wishYear){wishYear=data.wishYear;}
     if(data.wishMonth!==undefined){wishMonth=data.wishMonth;}
+    if(data.shiftHistory){shiftHistory=data.shiftHistory;}
+    if(data.viewingKey){viewingKey=data.viewingKey;}
     if(data.shiftData){
       shiftData=data.shiftData;
-      // 読み込み済みシフトを復元
+      // viewingKeyが未設定なら現在のshiftDataから復元
+      if(!viewingKey&&shiftData){
+        var ky,km;
+        if(shiftData.v===3){ky=shiftData.y;km=shiftData.m;}
+        else{ky=shiftData.year||shiftData.y;km=shiftData.month||shiftData.m||1;}
+        viewingKey=ky+'-'+km;
+      }
+      // 旧データ救済：shiftHistoryが空でshiftDataがあれば履歴に入れる
+      if(Object.keys(shiftHistory).length===0&&viewingKey){
+        shiftHistory[viewingKey]=shiftData;
+      }
+      // viewingKeyの月を表示
+      if(shiftHistory[viewingKey])shiftData=shiftHistory[viewingKey];
       renderShiftLoaded();
     }
     // 保存日時をトーストで表示
@@ -1303,8 +1370,9 @@ function loadSave(){
 }
 
 function clearSave(){
+  if(!confirm('保存されている全ての月のシフトデータを削除します。よろしいですか？'))return;
   try{localStorage.removeItem(STAFF_SAVE_KEY);}catch(e){}
-  shiftData=null;staffName='';wishes={};
+  shiftData=null;staffName='';wishes={};shiftHistory={};viewingKey='';
   buildNameBar();
   document.getElementById('shift-empty').style.display='';
   document.getElementById('shift-loaded').style.display='none';
