@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=yes">
 <meta name="color-scheme" content="light only">
 <style>:root{color-scheme:light only}</style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
@@ -528,16 +528,27 @@ function renderTodayCard(){
     return{label:'休日',sublabel:'お休み',color:'#8e8e93',bg:'#f5f5f7',icon:'🏠'};
   }
 
-  // 今週（月〜日）を取得
-  var todayDow=todayD?new Date(y,m,todayD).getDay():0; // 0=Sun
-  var mondayD=todayD?(todayD-(todayDow===0?6:todayDow-1)):null;
+  // 今週（月〜日）を実日付で取得（今日がシフト月外でも今週分を表示）
+  var todayDow=td.getDay(); // 0=Sun, 実際の今日基準
+  var monday=new Date(td.getFullYear(),td.getMonth(),td.getDate()-(todayDow===0?6:todayDow-1));
   var DOW_JP=['日','月','火','水','木','金','土'];
   var DOW_COLOR=['#dc2626','#1d1d1f','#1d1d1f','#1d1d1f','#1d1d1f','#1d1d1f','#2563eb'];
 
   // 今日メインカード
   var todaySt=todayD?getStatus(todayD):null;
   var todayHw=todayD?isHW(y,m,todayD):false;
-  var info=todaySt?statusInfo(todaySt,todayHw):statusInfo('o',false);
+  var info;
+  if(todayD){
+    info=statusInfo(todaySt,todayHw);
+  }else{
+    // 今日がシフト月外（来月分などを確認中）→月サマリー表示
+    var firstWorkD=null;
+    for(var fwd=1;fwd<=nd;fwd++){
+      var fs2=getStatus(fwd);
+      if(fs2==='w'||isHW(y,m,fwd)){firstWorkD=fwd;break;}
+    }
+    info={label:(m+1)+'月のシフト',sublabel:firstWorkD?'初出勤：'+(m+1)+'月'+firstWorkD+'日':'シフト確認',color:'#303A74',bg:'#eef0f8',icon:'📅'};
+  }
 
   // 今日働く仲間（v3のみ）
   var coworkers='';
@@ -563,33 +574,34 @@ function renderTodayCard(){
     }
   }
 
-  // 週間バーHTML
+  // 週間バーHTML（実日付ベース、シフト月内の日のみステータス表示）
   var weekHtml='';
   for(var wi=0;wi<7;wi++){
-    var wd=(wi+1)%7; // 月=1,火=2,...日=0
-    var wdLabel=DOW_JP[wd==='0'?0:wd];
-    // 正しく並べる：月火水木金土日 の順
     var wdActual=[1,2,3,4,5,6,0][wi];
-    wdLabel=DOW_JP[wdActual];
-    var wdayD=mondayD!==null?(mondayD+wi):null;
-    var wSt=wdayD&&wdayD>=1&&wdayD<=nd?getStatus(wdayD):null;
-    var wHw=wdayD&&wdayD>=1&&wdayD<=nd?isHW(y,m,wdayD):false;
-    var isToday=wdayD===todayD;
+    var wdLabel=DOW_JP[wdActual];
+    // この曜日の実日付
+    var cellDate=new Date(monday.getFullYear(),monday.getMonth(),monday.getDate()+wi);
+    // シフト月内か判定
+    var inMonth=(cellDate.getFullYear()===y&&cellDate.getMonth()===m);
+    var wdayD=cellDate.getDate();
+    var wSt=inMonth?getStatus(wdayD):null;
+    var wHw=inMonth?isHW(y,m,wdayD):false;
+    var isToday=(cellDate.getFullYear()===td.getFullYear()&&cellDate.getMonth()===td.getMonth()&&cellDate.getDate()===td.getDate());
     var wInfo=wSt?statusInfo(wSt,wHw):null;
-    var cellColor=!wdayD||wdayD<1||wdayD>nd?'#e5e5ea':(wHw?'#ffedd5':(wSt==='w'?'#dcf5e5':(wSt==='o'?'#e5e5ea':(wInfo?wInfo.bg:'#e5e5ea'))));
-    var cellText=!wdayD||wdayD<1||wdayD>nd?'':(wHw?'祝':(wSt==='w'?'出':(wSt==='o'?'休':(wSt==='p'?'有':(wSt==='s'?'夏':'他')))));
-    var cellTextColor=!wdayD||wdayD<1||wdayD>nd?'#c7c7cc':(wHw?'#c2410c':(wSt==='w'?'#1a7f37':(wSt==='o'?'#8e8e93':'#555')));
+    var cellColor=!inMonth?'#eeeef2':(wHw?'#ffedd5':(wSt==='w'?'#dcf5e5':(wSt==='o'?'#e5e5ea':(wInfo?wInfo.bg:'#e5e5ea'))));
+    var cellText=!inMonth?'-':(wHw?'祝':(wSt==='w'?'出':(wSt==='o'?'休':(wSt==='p'?'有':(wSt==='s'?'夏':'他')))));
+    var cellTextColor=!inMonth?'#c7c7cc':(wHw?'#c2410c':(wSt==='w'?'#1a7f37':(wSt==='o'?'#8e8e93':'#555')));
     weekHtml+='<div style="text-align:center">'+
       '<div style="font-size:9px;color:'+(wdActual===0?'#dc2626':wdActual===6?'#2563eb':'#8e8e93')+';margin-bottom:3px">'+wdLabel+'</div>'+
-      '<div style="height:38px;border-radius:8px;background:'+cellColor+';display:flex;align-items:center;justify-content:center;font-size:9px;color:'+cellTextColor+';font-weight:500;'+(isToday?'box-shadow:0 0 0 2px #0F6E56;':'')+'">'+(isToday?'<span style="color:'+cellTextColor+';font-weight:700">'+cellText+'</span>':cellText)+'</div>'+
-      (wdayD&&wdayD>=1&&wdayD<=nd?'<div style="font-size:8px;color:#c7c7cc;margin-top:2px">'+wdayD+'</div>':'<div style="height:12px"></div>')+
+      '<div style="height:38px;border-radius:8px;background:'+cellColor+';display:flex;align-items:center;justify-content:center;font-size:11px;color:'+cellTextColor+';font-weight:600;'+(isToday?'box-shadow:0 0 0 2px #0F6E56;':'')+'">'+cellText+'</div>'+
+      '<div style="font-size:8px;color:#c7c7cc;margin-top:2px">'+(cellDate.getMonth()+1)+'/'+wdayD+'</div>'+
     '</div>';
   }
 
   var html=
     '<div style="background:'+info.bg+';padding:14px 14px 12px;border-bottom:.5px solid rgba(0,0,0,.06)">'+
       '<div style="font-size:10px;color:'+info.color+';margin-bottom:4px;opacity:.8">'+
-        (todayD?(m+1)+'月'+todayD+'日（'+DOW_JP[new Date(y,m,todayD).getDay()]+'）':'このシフト月')+
+        (todayD?(m+1)+'月'+todayD+'日（'+DOW_JP[new Date(y,m,todayD).getDay()]+'）':y+'年'+(m+1)+'月のシフトを確認中')+
       '</div>'+
       '<div style="display:flex;align-items:center;justify-content:space-between">'+
         '<div style="display:flex;align-items:center;gap:10px">'+
