@@ -1589,7 +1589,16 @@ if('serviceWorker' in navigator){
     if(dist>THRESHOLD){
       ptrIndicator.style.height='90px';
       ptrIndicator.textContent='更新中...';
-      setTimeout(function(){location.reload();},300);
+      setTimeout(function(){
+        // データは触らず画面だけ再描画（localStorageは保持）
+        try{
+          buildNameBar();
+          if(typeof shiftData!=='undefined'&&shiftData){renderShiftLoaded();}
+          if(typeof renderWishCal==='function'){renderWishCal();}
+        }catch(e){}
+        ptrIndicator.style.height='0';
+        if(typeof showToast==='function')showToast('🔄 画面を更新しました');
+      },300);
     }else{
       ptrIndicator.style.height='0';
     }

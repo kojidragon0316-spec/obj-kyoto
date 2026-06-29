@@ -7003,7 +7003,22 @@ if('serviceWorker' in navigator){
     if(dist>THRESHOLD){
       ptrIndicator.style.height='90px';
       ptrIndicator.textContent='更新中...';
-      setTimeout(function(){location.reload();},300);
+      setTimeout(function(){
+        // データは触らず、現在のタブを再描画（localStorageは保持）
+        try{
+          var active=document.querySelector('.pane.active');
+          var id=active?active.id.replace('pane-',''):'cal';
+          if(id==='cal'&&typeof renderCal==='function')renderCal();
+          else if(id==='wish'&&typeof renderWish==='function')renderWish();
+          else if(id==='paid'&&typeof renderPaid==='function')renderPaid();
+          else if(id==='staff'&&typeof renderStaff==='function')renderStaff();
+          else if(id==='rules'&&typeof renderRules==='function')renderRules();
+          else if(id==='summary'&&typeof renderSummary==='function')renderSummary();
+          else if(typeof renderCal==='function')renderCal();
+        }catch(e){}
+        ptrIndicator.style.height='0';
+        if(typeof showAlert==='function')showAlert('🔄 画面を更新しました','ok');
+      },300);
     }else{
       ptrIndicator.style.height='0';
     }
