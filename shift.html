@@ -6974,5 +6974,42 @@ if('serviceWorker' in navigator){
   }
 }
 </script>
+<script>
+/* ===== プルトゥリフレッシュ（下に引っ張って更新）===== */
+(function(){
+  var ptrIndicator=document.createElement('div');
+  ptrIndicator.style.cssText='position:fixed;top:0;left:0;right:0;height:0;display:flex;align-items:center;justify-content:center;background:#303A74;color:#fff;font-size:13px;font-weight:600;z-index:9999;overflow:hidden;transition:height .15s;pointer-events:none';
+  ptrIndicator.textContent='↓ 引っ張って更新';
+  document.body.appendChild(ptrIndicator);
+  var startY=0,pulling=false,dist=0;
+  var THRESHOLD=70;
+  function atTop(){return (window.scrollY||document.documentElement.scrollTop||0)<=0;}
+  document.addEventListener('touchstart',function(e){
+    if(atTop()){startY=e.touches[0].clientY;pulling=true;dist=0;}
+    else{pulling=false;}
+  },{passive:true});
+  document.addEventListener('touchmove',function(e){
+    if(!pulling)return;
+    dist=e.touches[0].clientY-startY;
+    if(dist>0&&atTop()){
+      var h=Math.min(dist*0.5,90);
+      ptrIndicator.style.height=h+'px';
+      ptrIndicator.textContent=dist>THRESHOLD?'↑ 離して更新':'↓ 引っ張って更新';
+    }
+  },{passive:true});
+  document.addEventListener('touchend',function(){
+    if(!pulling)return;
+    pulling=false;
+    if(dist>THRESHOLD){
+      ptrIndicator.style.height='90px';
+      ptrIndicator.textContent='更新中...';
+      setTimeout(function(){location.reload();},300);
+    }else{
+      ptrIndicator.style.height='0';
+    }
+    dist=0;
+  },{passive:true});
+})();
+</script>
 </body>
 </html>
