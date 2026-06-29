@@ -809,6 +809,15 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
   <div class="card" style="padding:12px 14px" id="summary-content">
     <div style="color:#8e8e93;font-size:13px">先にシフトを自動生成してください。</div>
   </div>
+
+  <!-- 年間集計（全月合算） -->
+  <div class="card" style="padding:12px 14px;margin-top:8px;display:none" id="year-summary-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:14px;font-weight:600;color:#303A74">📊 年間累計</div>
+      <div style="font-size:11px;color:#8e8e93" id="ys-range-mgr"></div>
+    </div>
+    <div id="year-summary-content"></div>
+  </div>
 </div>
 
 <!-- .ics エクスポートモーダル -->
@@ -4420,6 +4429,118 @@ function renderSummary(){
     html+='</div>';
   }
   document.getElementById('summary-content').innerHTML=html;
+  renderYearSummaryMgr();
+}
+
+// ===== 年間集計（管理者・全スタッフ全月合算）=====
+function renderYearSummaryMgr(){
+  var card=document.getElementById('year-summary-card');
+  if(!card)return;
+  // 蓄積された月キーを取得
+  var monthKeys=Object.keys(shifts).filter(function(k){
+    return shifts[k]&&Object.keys(shifts[k]).length>0;
+  });
+  // 2ヶ月未満なら非表示
+  if(monthKeys.length<=1){card.style.display='none';return;}
+  card.style.display='';
+
+  // 月キーを時系列ソート（"2026-7"形式）
+  monthKeys.sort(function(a,b){
+    var pa=a.split('-'),pb=b.split('-');
+    return (parseInt(pa[0])*12+parseInt(pa[1]))-(parseInt(pb[0])*12+parseInt(pb[1]));
+  });
+
+  // スタッフごとの年間累計
+  var totals={};
+  STAFF.forEach(function(s){totals[s.id]={w:0,r:0,p:0,sm:0,ks:0};});
+
+  monthKeys.forEach(function(key){
+    var p=key.split('-');
+    var ky=parseInt(p[0]),km=parseInt(p[1]); // mkキーのmは0始まり
+    var mData=shifts[key];
+    Object.keys(mData).forEach(function(dkey){
+      var d=parseInt(dkey.split('-')[2]);
+      var s=mData[dkey];
+      var hw=isHW(ky,km,d);
+      if(s.present)s.present.forEach(function(id){if(totals[id])totals[id].w++;});
+      if(s.absent&&!hw)s.absent.forEach(function(id){
+        if(!totals[id])return;
+        if(outgoingData[id]&&outgoingData[id][dkey]){totals[id].w++;}
+        else{totals[id].r++;}
+      });
+    });
+    // 有給・夏休・休出を月ごとに集計
+    STAFF.forEach(function(s){
+      // leaveData/holidayWorkから該当年月を数える
+      var pc=0,sc=0,ks=0;
+      if(leaveData[s.id]){
+        Object.keys(leaveData[s.id]).forEach(function(lk){
+          var lp=lk.split('-');
+          if(parseInt(lp[0])===ky&&parseInt(lp[1])===(km+1)){
+            if(leaveData[s.id][lk]==='paid')pc++;
+            else if(leaveData[s.id][lk]==='summer')sc++;
+          }
+        });
+      }
+      if(holidayWork[s.id]){
+        Object.keys(holidayWork[s.id]).forEach(function(hk){
+          var hp=hk.split('-');
+          if(parseInt(hp[0])===ky&&parseInt(hp[1])===(km+1)&&holidayWork[s.id][hk])ks++;
+        });
+      }
+      totals[s.id].p+=pc;
+      totals[s.id].sm+=sc;
+      totals[s.id].ks+=ks;
+    });
+  });
+
+  // 範囲ラベル
+  var fp=monthKeys[0].split('-'),lp=monthKeys[monthKeys.length-1].split('-');
+  document.getElementById('ys-range-mgr').textContent=
+    fp[0]+'年'+fp[1]+'月 〜 '+lp[0]+'年'+lp[1]+'月（'+monthKeys.length+'ヶ月）';
+
+  // テーブル生成
+  var html='<table class="sum-table"><tr>'+
+    '<th>スタッフ</th><th style="text-align:center">出勤</th><th style="text-align:center">休日</th>'+
+    '<th style="text-align:center">有給</th><th style="text-align:center">夏休</th>'+
+    '<th style="text-align:center;color:#ff6d00">休出</th></tr>';
+  STAFF.forEach(function(s){
+    var t=totals[s.id];
+    html+='<tr><td><span style="display:inline-flex;align-items:center;gap:4px">'+
+      '<span style="width:8px;height:8px;border-radius:50%;background:'+s.color+';display:inline-block"></span>'+s.name+'</span></td>'+
+      '<td style="text-align:center;font-weight:600;color:#0F6E56">'+t.w+'日</td>'+
+      '<td style="text-align:center;color:#8e8e93">'+t.r+'日</td>'+
+      '<td style="text-align:center;font-size:12px;color:#007aff">'+t.p+'日</td>'+
+      '<td style="text-align:center;font-size:12px;color:#cc6600">'+t.sm+'日</td>'+
+      '<td style="text-align:center;font-size:12px;color:'+(t.ks>0?'#ff6d00':'#c7c7cc')+'">'+(t.ks>0?'<b>'+t.ks+'日</b>':'—')+'</td>'+
+    '</tr>';
+  });
+  html+='</table>';
+
+  // 月別内訳
+  html+='<div style="margin-top:12px;font-size:11px;font-weight:700;color:#8e8e93;margin-bottom:6px">月別内訳</div>';
+  monthKeys.forEach(function(key){
+    var p=key.split('-');
+    var ky=parseInt(p[0]),km=parseInt(p[1]);
+    var mData=shifts[key];
+    var totW=0;
+    Object.keys(mData).forEach(function(dkey){
+      var s=mData[dkey];
+      if(s.present)totW+=s.present.length;
+      var d=parseInt(dkey.split('-')[2]);
+      var hw=isHW(ky,km,d);
+      if(s.absent&&!hw)s.absent.forEach(function(id){
+        if(outgoingData[id]&&outgoingData[id][dkey])totW++;
+      });
+    });
+    var isCur=(key===mk(curY,curM));
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-radius:8px;'+(isCur?'background:#eef0f8;':'')+'font-size:12px">'+
+      '<span style="font-weight:'+(isCur?'700':'500')+';color:'+(isCur?'#303A74':'#1d1d1f')+'">'+p[0]+'年'+p[1]+'月</span>'+
+      '<span style="color:#8e8e93">のべ出勤 <b style="color:#0F6E56">'+totW+'</b>人日</span>'+
+    '</div>';
+  });
+
+  document.getElementById('year-summary-content').innerHTML=html;
 }
 
 // 初期化
