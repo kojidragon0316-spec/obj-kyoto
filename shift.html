@@ -255,6 +255,8 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
 .save-btn-hdr:active{opacity:.8}
 .save-status{font-size:10px;color:rgba(255,255,255,.6);margin-top:2px;text-align:right}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body>
 <header style="display:flex;align-items:center;justify-content:space-between">
@@ -877,8 +879,20 @@ header h1{font-size:17px;font-weight:600;letter-spacing:-0.3px;color:#fff}
         <button onclick="copyShareCode()" class="modal-save" style="flex:1;padding:10px;border-radius:10px;font-size:14px;cursor:pointer;border:none;font-family:inherit;background:#34c759;color:#fff;font-weight:500">
           📋 コードをコピー
         </button>
+        <button onclick="shareViaQR()" style="flex:1;padding:10px;border-radius:10px;font-size:14px;cursor:pointer;border:none;font-family:inherit;background:#303A74;color:#fff;font-weight:500">
+          📱 QRで送る
+        </button>
       </div>
       <div style="font-size:11px;color:#34c759;margin-top:5px;text-align:center" id="share-copy-msg"></div>
+      <!-- QRコード表示エリア -->
+      <div id="share-qr-area" style="display:none;margin-top:12px;text-align:center;padding:14px;background:#f9f9fb;border-radius:12px">
+        <canvas id="share-qr-canvas" style="max-width:200px;width:100%;height:auto;background:#fff;border-radius:8px"></canvas>
+        <div style="font-size:11px;color:#8e8e93;margin-top:8px" id="share-qr-name"></div>
+        <button onclick="sendQRImage()" style="margin-top:10px;width:100%;padding:11px;border-radius:10px;font-size:14px;cursor:pointer;border:none;font-family:inherit;background:#06C755;color:#fff;font-weight:600">
+          📤 LINEで画像を送る
+        </button>
+        <div style="font-size:10px;color:#8e8e93;margin-top:6px">送れない場合は長押しで画像を保存できます</div>
+      </div>
     </div>
 
     <!-- 全スタッフ一括 -->
@@ -3303,6 +3317,78 @@ function copyShareCode() {
     document.getElementById('share-copy-msg').textContent = '✓ ' + name + 'さんのコードをコピーしました！LINEで送ってください';
     setTimeout(function() { document.getElementById('share-copy-msg').textContent = ''; }, 3000);
   });
+}
+
+// ======= QRコード共有 =======
+// 現在表示中のコードを圧縮してQR化
+function shareViaQR(){
+  var code = document.getElementById('share-code-text').value;
+  if(!code){showAlert('先にコードを生成してください','warn');return;}
+  if(typeof QRCode==='undefined'||typeof LZString==='undefined'){
+    showAlert('QRライブラリの読み込み中です。少し待って再度お試しください','warn');return;
+  }
+  var s = STAFF.filter(function(x){return x.id===shareSelectedId;})[0];
+  var name = s ? s.name : '全スタッフ';
+  // 元コードをデコードしてJSON化→LZ圧縮（接頭辞L:を付与）
+  var qrPayload;
+  try{
+    var json = decodeURIComponent(atob(code));
+    qrPayload = 'L:' + LZString.compressToEncodedURIComponent(json);
+  }catch(e){
+    // デコード失敗時はそのまま
+    qrPayload = code;
+  }
+  var canvas = document.getElementById('share-qr-canvas');
+  QRCode.toCanvas(canvas, qrPayload, {
+    width: 400,
+    margin: 2,
+    errorCorrectionLevel: 'M',
+    color:{dark:'#1d1d1f',light:'#ffffff'}
+  }, function(err){
+    if(err){
+      console.error(err);
+      showAlert('QRコードの生成に失敗しました（データが大きすぎる可能性）','warn');
+      return;
+    }
+    document.getElementById('share-qr-area').style.display='';
+    document.getElementById('share-qr-name').textContent = name + 'さん用シフトQRコード';
+    // QRエリアまでスクロール
+    document.getElementById('share-qr-area').scrollIntoView({behavior:'smooth',block:'center'});
+  });
+}
+
+// QR画像をLINE等に共有（Web Share API）
+function sendQRImage(){
+  var canvas = document.getElementById('share-qr-canvas');
+  if(!canvas){return;}
+  var name = document.getElementById('share-qr-name').textContent.replace('用シフトQRコード','');
+  canvas.toBlob(function(blob){
+    if(!blob){showAlert('画像の生成に失敗しました','warn');return;}
+    var file = new File([blob], 'obj_shift_qr.png', {type:'image/png'});
+    // Web Share API（画像共有対応か判定）
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({
+        files:[file],
+        title:'OBJシフト',
+        text: name + 'のシフトQRコードです。staffアプリの「QR画像を読み込む」から取り込んでください。'
+      }).catch(function(e){
+        if(e.name!=='AbortError')fallbackDownloadQR(blob);
+      });
+    }else{
+      // 非対応→ダウンロード
+      fallbackDownloadQR(blob);
+    }
+  }, 'image/png');
+}
+
+function fallbackDownloadQR(blob){
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'obj_shift_qr.png';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  showAlert('QR画像を保存しました。LINEで写真として送ってください','ok');
 }
 
 // 全スタッフ一括リスト（全員共通の v:3 コードを共有）
